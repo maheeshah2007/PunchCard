@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Auth as AuthAPI, Auth } from "../api";
+import { Auth as AuthAPI } from "../api";
 import { useAuth } from "../context/AuthContext";
 
 declare global {
@@ -60,7 +60,7 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
             <button
               onClick={async () => {
                 try {
-                  const { user } = await Auth.devLogin("user");
+                  const { user } = await AuthAPI.devLogin("user");
                   setUser({ sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role });
                   navigate("/dashboard");
                 } catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
@@ -72,7 +72,7 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
             <button
               onClick={async () => {
                 try {
-                  const { user } = await Auth.devLogin("business");
+                  const { user } = await AuthAPI.devLogin("business");
                   setUser({ sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role });
                   navigate("/business/dashboard");
                 } catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
