@@ -194,7 +194,17 @@ SEED_BUSINESSES = [
 
 
 def seed_database(db: Session):
+    # Ensure dev bypass users always exist
+    for dev_id, dev_role, dev_name in [
+        ("dev_user_00001", "user", "Dev Customer"),
+        ("dev_business_00001", "business", "Dev Business"),
+    ]:
+        if not db.query(UserDB).filter(UserDB.id == dev_id).first():
+            db.add(UserDB(id=dev_id, email=f"{dev_id}@localhost", name=dev_name, role=dev_role))
+    db.flush()
+
     if db.query(BusinessDB).filter(BusinessDB.is_mock == True).first():
+        db.commit()
         return
     seed_owner = db.query(UserDB).filter(UserDB.id == SEED_OWNER_ID).first()
     if not seed_owner:

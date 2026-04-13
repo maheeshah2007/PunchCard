@@ -58,24 +58,18 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
           <p style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 10, fontWeight: 600, letterSpacing: "0.05em" }}>DEV BYPASS</p>
           <div style={{ display: "flex", gap: 8 }}>
             <button
-              onClick={async () => {
-                try {
-                  const { user } = await AuthAPI.devLogin("user");
-                  setUser({ sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role });
-                  navigate("/dashboard");
-                } catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
+              onClick={() => {
+                setUser({ sub: "dev_user_00001", email: "dev-user@localhost", name: "Dev Customer", picture: undefined, role: "user" });
+                navigate("/dashboard");
               }}
               style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: "none", background: "#3F3CA8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
             >
               👤 Customer
             </button>
             <button
-              onClick={async () => {
-                try {
-                  const { user } = await AuthAPI.devLogin("business");
-                  setUser({ sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role });
-                  navigate("/business/dashboard");
-                } catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
+              onClick={() => {
+                setUser({ sub: "dev_business_00001", email: "dev-business@localhost", name: "Dev Business", picture: undefined, role: "business" });
+                navigate("/business/dashboard");
               }}
               style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: "none", background: "#252178", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
             >
