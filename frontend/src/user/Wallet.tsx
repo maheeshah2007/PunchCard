@@ -4,87 +4,117 @@ import { useAuth } from "../context/AuthContext";
 import { UserCards, UserPunchCard } from "../api";
 import UserLayout from "./Layout";
 
-const STYLE_ICON: Record<string, string> = {
-  classic: "⭕", star: "⭐", heart: "❤️", coffee: "☕",
+const MONO = "'Space Mono', monospace";
+
+const CAT_EMOJI: Record<string, string> = {
+  classic: "◉", star: "★", heart: "♥", coffee: "✿",
 };
 
-function PunchCard({ card }: { card: UserPunchCard }) {
-  const navigate = useNavigate();
-  const { template, business, stamps_collected, is_completed } = card;
-  const icon = STYLE_ICON[template.style] ?? "⭕";
-  const pct = (stamps_collected / template.total_stamps) * 100;
+function PunchDots({ collected, total, style }: { collected: number; total: number; style: string }) {
+  const icon = CAT_EMOJI[style] ?? "◉";
+  // Show up to 9 dots max in the row
+  const display = Math.min(total, 9);
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, maxWidth: 180 }}>
+      {Array.from({ length: display }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            border: i < collected ? "none" : "1.5px solid #CACACA",
+            background: i < collected ? "#0D0D0D" : "transparent",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 11,
+            color: "#fff",
+          }}
+        >
+          {i < collected ? icon : ""}
+        </div>
+      ))}
+    </div>
+  );
+}
 
+function WalletRow({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
+  const { business, template, stamps_collected, is_completed } = card;
   return (
     <div
+      onClick={onClick}
       style={{
-        background: "linear-gradient(135deg, #252178 0%, #3F3CA8 100%)",
-        borderRadius: 22, padding: "22px 20px", marginBottom: 18, color: "#fff",
-        position: "relative", overflow: "hidden",
-        boxShadow: "0 8px 32px rgba(63,60,168,0.25)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "16px 0",
+        borderBottom: "1px solid #F0F0F0",
+        cursor: "pointer",
+        gap: 12,
       }}
     >
-      {/* Decorative circles */}
-      <div style={{ position: "absolute", right: -24, top: -24, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-      <div style={{ position: "absolute", right: 20, bottom: -30, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
-
-      {/* Completed badge */}
-      {is_completed && (
-        <div style={{ position: "absolute", top: 16, right: 16, background: "#00C896", color: "#fff", borderRadius: 999, padding: "4px 12px", fontSize: 11, fontWeight: 800, letterSpacing: "0.5px" }}>
-          REWARD READY ✓
+      {/* Left: logo + name */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            background: "#F0F0F0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 18,
+            flexShrink: 0,
+            fontFamily: MONO,
+          }}
+        >
+          {business.name[0].toUpperCase()}
         </div>
-      )}
-
-      {/* Business info */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700 }}>
-          {business.name[0]}
-        </div>
-        <div>
-          <div style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.3px" }}>{business.name}</div>
-          <div style={{ fontSize: 12, opacity: 0.65 }}>{template.name}</div>
-        </div>
-      </div>
-
-      {/* Stamps grid */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", marginBottom: 18, background: "rgba(0,0,0,0.1)", borderRadius: 14, padding: "16px 12px" }}>
-        {Array.from({ length: template.total_stamps }).map((_, i) => (
-          <span
-            key={i}
+        <div style={{ minWidth: 0 }}>
+          <div
             style={{
-              fontSize: 22,
-              opacity: i < stamps_collected ? 1 : 0.2,
-              filter: i < stamps_collected ? "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" : "grayscale(1)",
-              transform: i < stamps_collected ? "scale(1)" : "scale(0.85)",
-              transition: "all 0.2s",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#0D0D0D",
+              fontFamily: MONO,
+              letterSpacing: "-0.3px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: 110,
             }}
           >
-            {icon}
-          </span>
-        ))}
+            {business.name}
+          </div>
+          {is_completed && (
+            <div
+              style={{
+                marginTop: 3,
+                display: "inline-block",
+                background: "#0D0D0D",
+                color: "#fff",
+                fontSize: 9,
+                fontFamily: MONO,
+                letterSpacing: "0.08em",
+                padding: "2px 7px",
+                borderRadius: 999,
+              }}
+            >
+              EARNED
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Progress */}
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, opacity: 0.75, marginBottom: 6 }}>
-          <span>{stamps_collected} of {template.total_stamps} stamps</span>
-          <span>{is_completed ? "Complete!" : `${template.total_stamps - stamps_collected} more to go`}</span>
-        </div>
-        <div style={{ height: 6, background: "rgba(255,255,255,0.15)", borderRadius: 999, overflow: "hidden" }}>
-          <div style={{ height: "100%", background: "#fff", width: `${pct}%`, borderRadius: 999, transition: "width 0.5s ease" }} />
+      {/* Right: punch dots + count */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        <PunchDots collected={stamps_collected} total={template.total_stamps} style={template.style} />
+        <div style={{ fontSize: 11, color: "#9CA3AF", fontFamily: MONO, minWidth: 32, textAlign: "right" }}>
+          {stamps_collected}/{template.total_stamps}
         </div>
       </div>
-
-      {/* Reward */}
-      <div style={{ fontSize: 12, opacity: 0.8 }}>🎁 {template.reward_description}</div>
-
-      {!is_completed && (
-        <button
-          onClick={() => navigate("/authenticate")}
-          style={{ marginTop: 16, width: "100%", padding: "11px", borderRadius: 12, border: "2px solid rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "-0.2px", backdropFilter: "blur(4px)" }}
-        >
-          Add Stamp →
-        </button>
-      )}
     </div>
   );
 }
@@ -94,7 +124,6 @@ export default function UserWallet() {
   const { authHeaders } = useAuth();
   const [cards, setCards] = useState<UserPunchCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"active" | "completed">("active");
 
   useEffect(() => {
     UserCards.list(authHeaders()).then(data => {
@@ -103,66 +132,77 @@ export default function UserWallet() {
     });
   }, []);
 
-  const active    = cards.filter(c => !c.is_completed);
+  const active = cards.filter(c => !c.is_completed);
   const completed = cards.filter(c => c.is_completed);
-  const shown     = tab === "active" ? active : completed;
 
   return (
     <UserLayout>
-      <div style={{ minHeight: "100vh", background: "#F8F7FF" }}>
+      <div style={{ minHeight: "100vh", background: "#fff" }}>
         {/* Header */}
-        <div style={{ background: "linear-gradient(160deg, #252178 0%, #3F3CA8 100%)", paddingTop: 52, paddingBottom: 24, paddingLeft: 20, paddingRight: 20 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>My Wallet</h1>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", marginTop: 4 }}>
-            {cards.length} loyalty card{cards.length !== 1 ? "s" : ""}
-          </p>
+        <div style={{ padding: "56px 24px 16px" }}>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#0D0D0D", fontFamily: MONO, letterSpacing: "-0.5px" }}>
+            WALLET
+          </div>
+          <div style={{ fontSize: 11, color: "#9CA3AF", fontFamily: MONO, marginTop: 4, letterSpacing: "0.06em" }}>
+            {cards.length} ACTIVE PUNCHCARD{cards.length !== 1 ? "S" : ""}
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", background: "#fff", borderBottom: "1px solid #F0F0F0", position: "sticky", top: 0, zIndex: 10 }}>
-          {(["active", "completed"] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                flex: 1, padding: "14px 0", border: "none", background: "transparent", cursor: "pointer",
-                fontSize: 14, fontWeight: 700,
-                color: tab === t ? "#3F3CA8" : "#9CA3AF",
-                borderBottom: `3px solid ${tab === t ? "#3F3CA8" : "transparent"}`,
-              }}
-            >
-              {t === "active" ? `Active (${active.length})` : `Completed (${completed.length})`}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ padding: "20px 20px 100px" }}>
-          {loading ? (
-            <div style={{ textAlign: "center", padding: 60, color: "#9CA3AF" }}>Loading...</div>
-          ) : shown.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <div style={{ fontSize: 56, marginBottom: 16 }}>{tab === "active" ? "💳" : "🏆"}</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#1A1A2E", marginBottom: 6 }}>
-                {tab === "active" ? "No active cards" : "No rewards earned yet"}
-              </div>
-              <div style={{ fontSize: 14, color: "#6B7280", lineHeight: 1.6, marginBottom: 24 }}>
-                {tab === "active"
-                  ? "Visit a local business and join their loyalty program to get started"
-                  : "Keep collecting stamps to earn your first reward!"}
-              </div>
-              {tab === "active" && (
-                <button
-                  onClick={() => navigate("/dashboard")}
-                  style={{ padding: "13px 28px", borderRadius: 12, border: "none", background: "linear-gradient(180deg, #3F3CA8 0%, #252178 100%)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
-                >
-                  Explore Businesses →
-                </button>
-              )}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 60, color: "#9CA3AF", fontFamily: MONO, fontSize: 12 }}>
+            LOADING...
+          </div>
+        ) : cards.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "60px 24px", fontFamily: MONO }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>◉</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#0D0D0D", marginBottom: 8, letterSpacing: "0.05em" }}>
+              NO PUNCHCARDS YET
             </div>
-          ) : (
-            shown.map(card => <PunchCard key={card.id} card={card} />)
-          )}
-        </div>
+            <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 24, letterSpacing: "0.04em" }}>
+              VISIT A LOCAL BUSINESS TO GET STARTED
+            </div>
+            <button
+              onClick={() => navigate("/dashboard")}
+              style={{ padding: "14px 28px", borderRadius: 999, border: "none", background: "#0D0D0D", color: "#fff", fontSize: 12, fontFamily: MONO, letterSpacing: "0.1em", cursor: "pointer" }}
+            >
+              EXPLORE →
+            </button>
+          </div>
+        ) : (
+          <div style={{ padding: "0 24px 100px" }}>
+            {/* Active */}
+            {active.length > 0 && (
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.1em", marginBottom: 4, paddingTop: 8 }}>
+                  ACTIVE
+                </div>
+                {active.map(card => (
+                  <WalletRow
+                    key={card.id}
+                    card={card}
+                    onClick={() => navigate(`/businesses/${card.business.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Completed */}
+            {completed.length > 0 && (
+              <div style={{ marginTop: 20 }}>
+                <div style={{ fontSize: 10, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.1em", marginBottom: 4 }}>
+                  EARNED
+                </div>
+                {completed.map(card => (
+                  <WalletRow
+                    key={card.id}
+                    card={card}
+                    onClick={() => navigate(`/businesses/${card.business.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </UserLayout>
   );
