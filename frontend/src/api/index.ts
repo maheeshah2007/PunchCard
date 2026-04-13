@@ -25,6 +25,7 @@ export interface AuthCodeResult { code: string; expires_at: string; template_id:
 
 export const Auth = {
   google: (credential: string) => request<{ ok: boolean; user: GoogleUser }>("/auth/google", { method: "POST", body: JSON.stringify({ credential }) }),
+  devLogin: (role: "user" | "business") => request<{ ok: boolean; user: GoogleUser }>(`/auth/dev-login?role=${role}`, { method: "POST" }),
 };
 
 export const Users = {

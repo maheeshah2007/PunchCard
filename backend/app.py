@@ -298,6 +298,21 @@ def serialize_user_punchcard(upc: UserPunchCardDB) -> dict:
 def health():
     return {"ok": True}
 
+@app.post("/auth/dev-login")
+def dev_login(role: str = "user", db: Session = Depends(get_db)):
+    """Dev-only bypass — skips Google OAuth for local testing."""
+    user_id = f"dev_{role}_00001"
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        user = UserDB(id=user_id, email=f"dev-{role}@localhost", name=f"Dev {role.capitalize()}", role=role)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    elif user.role != role:
+        user.role = role
+        db.commit()
+    return {"ok": True, "user": {"sub": user.id, "email": user.email, "name": user.name, "picture": None, "role": user.role}}
+
 @app.post("/auth/google")
 def auth_google(payload: GoogleCredential, db: Session = Depends(get_db)):
     try:

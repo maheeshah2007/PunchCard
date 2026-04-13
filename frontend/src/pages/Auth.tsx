@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Auth as AuthAPI } from "../api";
+import { Auth as AuthAPI, Auth } from "../api";
 import { useAuth } from "../context/AuthContext";
 
 declare global {
@@ -52,7 +52,39 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
           <div ref={googleBtnRef} />
           {error && <p style={{ color: "#EF4444", marginTop: 12, fontSize: 14 }}>{error}</p>}
         </div>
-        <p style={{ marginTop: 24, fontSize: 14, color: "#6B7280" }}>
+
+        {/* ── Dev bypass ── */}
+        <div style={{ marginTop: 20, padding: "16px", background: "#F9FAFB", borderRadius: 12, border: "1px dashed #D1D5DB" }}>
+          <p style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 10, fontWeight: 600, letterSpacing: "0.05em" }}>DEV BYPASS</p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={async () => {
+                try {
+                  const { user } = await Auth.devLogin("user");
+                  setUser({ sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role });
+                  navigate("/dashboard");
+                } catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
+              }}
+              style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: "none", background: "#3F3CA8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+            >
+              👤 Customer
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const { user } = await Auth.devLogin("business");
+                  setUser({ sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role });
+                  navigate("/business/dashboard");
+                } catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
+              }}
+              style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: "none", background: "#252178", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+            >
+              🏪 Business
+            </button>
+          </div>
+        </div>
+
+        <p style={{ marginTop: 16, fontSize: 14, color: "#6B7280" }}>
           {mode === "register" ? <>Already have an account? <a href="/login" style={{ color: "#3F3CA8", fontWeight: 600, textDecoration: "none" }}>Log in</a></> : <>New here? <a href="/register" style={{ color: "#3F3CA8", fontWeight: 600, textDecoration: "none" }}>Sign up</a></>}
         </p>
       </div>
