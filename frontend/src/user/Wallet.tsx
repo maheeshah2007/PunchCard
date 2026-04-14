@@ -128,8 +128,7 @@ export default function UserWallet() {
   useEffect(() => {
     UserCards.list(authHeaders()).then(data => {
       setCards(data);
-      setLoading(false);
-    });
+    }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   const active = cards.filter(c => !c.is_completed);

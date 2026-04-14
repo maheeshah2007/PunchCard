@@ -224,7 +224,7 @@ def seed_database(db: Session):
 GOOGLE_CLIENT_ID = "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com"
 
 app = FastAPI(title="NeighborGood API")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:5177"], allow_methods=["*"], allow_headers=["*"])
 
 
 @app.on_event("startup")
