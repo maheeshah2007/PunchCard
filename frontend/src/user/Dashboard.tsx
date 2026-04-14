@@ -141,7 +141,7 @@ export default function UserDashboard() {
         {/* HI [NAME]! */}
         <div style={{ background: "#fff", padding: "14px 16px 16px", borderBottom: "1px solid #F0F0F0" }}>
           <div style={{ fontSize: 32, fontWeight: 800, color: "#0D0D0D", letterSpacing: "-1px", marginBottom: 4, lineHeight: 1.1 }}>
-            HI {firstName}!
+            HI, {firstName}!
           </div>
           <div style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.06em", marginBottom: myCards.length > 0 ? 14 : 0 }}>
             MAKE THE SMARTER, LOCALLY &amp; SUSTAINABLY.
