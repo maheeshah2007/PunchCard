@@ -11,38 +11,56 @@ const CAT_EMOJI: Record<string, string> = {
   Beauty: "💇", Retail: "🛍️", Other: "🏪",
 };
 
-/* Same punchcard visual as AuthenticatePurchase */
+/* Punchcard matching Component 1.png */
 function PunchCard({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
   const { business, template, stamps_collected } = card;
   const total = template.total_stamps;
+  const icon = CAT_EMOJI[business.category] ?? business.name[0].toUpperCase();
+  // Show up to 9 stamps in the grid; if more, still cap grid at 9
+  const gridCount = Math.min(total, 9);
   return (
-    <div onClick={onClick} style={{ background: "#fff", borderRadius: 16, padding: "14px 12px 10px", border: "1px solid #E0E0E0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)", cursor: "pointer" }}>
-      <div style={{ display: "flex", gap: 10 }}>
-        <div style={{ width: 88, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ width: 72, height: 72, borderRadius: 14, background: "#F5F0F0", border: "1px solid #E8E0E0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, marginBottom: 6 }}>
-            {CAT_EMOJI[business.category] ?? business.name[0].toUpperCase()}
+    <div onClick={onClick} style={{ background: "#F5F5F5", borderRadius: 18, padding: "16px 14px 12px", cursor: "pointer" }}>
+      <div style={{ display: "flex", gap: 12 }}>
+        {/* Left: logo + name + reward */}
+        <div style={{ width: 100, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#fff", border: "2px solid #1A1A1A", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 10 }}>
+            {icon}
           </div>
-          <div style={{ fontSize: 9, fontFamily: MONO, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.3, marginBottom: 4 }}>{business.name}</div>
-          <div style={{ fontSize: 8, fontFamily: MONO, color: "#6B7280", lineHeight: 1.4, flex: 1 }}>{template.reward_description}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.25, marginBottom: 6 }}>{business.name}</div>
+          <div style={{ fontSize: 10, color: "#4B4B4B", lineHeight: 1.5, flex: 1 }}>{template.reward_description}</div>
         </div>
+        {/* Right: stamp grid */}
         <div style={{ flex: 1 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
-            {Array.from({ length: total }).map((_, i) => {
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 7 }}>
+            {Array.from({ length: gridCount }).map((_, i) => {
               const filled = i < stamps_collected;
+              const isLast = i === gridCount - 1;
               return (
-                <div key={i} style={{ aspectRatio: "1", borderRadius: "50%", background: filled ? "#C8A090" : "#F8F8F8", border: `1.5px solid ${filled ? "#C8A090" : "#DEDEDE"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: filled ? 13 : 9, fontFamily: MONO, color: filled ? "#fff" : "#ACACAC", fontWeight: 700 }}>
-                  {filled ? "◉" : (i + 1).toString().padStart(2, "0")}
+                <div key={i} style={{
+                  aspectRatio: "1",
+                  borderRadius: "50%",
+                  background: filled ? "#C8A090" : "#fff",
+                  border: "2px solid #1A1A1A",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: filled ? 20 : (isLast ? 16 : 11),
+                  fontFamily: MONO,
+                  color: filled ? "#fff" : (isLast ? "rgba(26,26,26,0.2)" : "#1A1A1A"),
+                  fontWeight: 700,
+                  position: "relative",
+                }}>
+                  {filled ? icon : (isLast ? icon : (i + 1).toString().padStart(2, "0"))}
                 </div>
               );
             })}
           </div>
         </div>
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, paddingTop: 6, borderTop: "1px solid #F0F0F0" }}>
-        <div style={{ fontSize: 7, fontFamily: MONO, color: "#9CA3AF", background: "#F5F5F5", padding: "3px 8px", borderRadius: 999, border: "1px solid #E5E5E5" }}>
+      {/* Footer */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+        <div style={{ fontSize: 8, fontFamily: MONO, color: "#1A1A1A", background: "#fff", padding: "4px 10px", borderRadius: 999, border: "1.5px solid #1A1A1A" }}>
           {business.name.toUpperCase()}
         </div>
-        <div style={{ fontSize: 9, fontFamily: MONO, color: "#1A1A1A", fontWeight: 700 }}>
+        <div style={{ fontSize: 8, fontFamily: MONO, color: "#1A1A1A", background: "#fff", padding: "4px 10px", borderRadius: 999, border: "1.5px solid #1A1A1A", fontWeight: 700 }}>
           {stamps_collected.toString().padStart(2, "0")}/{total.toString().padStart(2, "0")}
         </div>
       </div>
@@ -50,18 +68,15 @@ function PunchCard({ card, onClick }: { card: UserPunchCard; onClick: () => void
   );
 }
 
-/* Compact row for additional reward cards */
+/* Compact dark row for additional reward cards */
 function RewardRow({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
   const { business, stamps_collected, template } = card;
   return (
-    <div onClick={onClick} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #F5F5F5", cursor: "pointer" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 32, height: 32, borderRadius: 8, background: "#F0F0F0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-          {CAT_EMOJI[business.category] ?? business.name[0]}
-        </div>
-        <div style={{ fontSize: 10, fontFamily: MONO, fontWeight: 700, color: "#0D0D0D" }}>{business.name}</div>
+    <div onClick={onClick} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", background: "#1A1A1A", borderRadius: 999, marginTop: 8, cursor: "pointer" }}>
+      <div style={{ fontSize: 9, fontFamily: MONO, fontWeight: 700, color: "#fff", background: "rgba(255,255,255,0.15)", padding: "4px 12px", borderRadius: 999 }}>
+        {business.name.toUpperCase()}
       </div>
-      <div style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF" }}>
+      <div style={{ fontSize: 9, fontFamily: MONO, color: "#fff", background: "rgba(255,255,255,0.15)", padding: "4px 12px", borderRadius: 999, fontWeight: 700 }}>
         {stamps_collected.toString().padStart(2, "0")}/{template.total_stamps.toString().padStart(2, "0")}
       </div>
     </div>
@@ -169,10 +184,10 @@ export default function UserDashboard() {
           <>
             {/* YOUR REWARDS */}
             {firstCard && (
-              <div style={{ background: "#fff", padding: "14px 14px 8px", marginTop: 8 }}>
+              <div style={{ background: "#fff", padding: "14px 14px 16px", marginTop: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, fontFamily: MONO, color: "#0D0D0D", letterSpacing: "0.06em" }}>YOUR REWARDS</div>
-                  <div onClick={() => navigate("/wallet")} style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", cursor: "pointer" }}>View all ❱❱</div>
+                  <div onClick={() => navigate("/wallet")} style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", cursor: "pointer" }}>View all ▦</div>
                 </div>
                 <PunchCard card={firstCard} onClick={() => navigate(`/businesses/${firstCard.business.id}`)} />
                 {restCards.map(card => (
