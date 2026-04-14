@@ -4,12 +4,116 @@ import { useAuth } from "../context/AuthContext";
 import { Businesses, UserCards, Business, UserPunchCard } from "../api";
 import UserLayout from "./Layout";
 
+const MONO = "'Space Mono', monospace";
+
 const CAT_EMOJI: Record<string, string> = {
   Coffee: "☕", Food: "🍕", Books: "📚", Fitness: "💪",
   Beauty: "💇", Retail: "🛍️", Other: "🏪",
 };
 
 const CATEGORIES = ["All", "Coffee", "Food", "Books", "Fitness", "Beauty", "Retail"];
+
+function BusinessCard({ biz, card, onClick }: { biz: Business; card?: UserPunchCard; onClick: () => void }) {
+  const stamps = card?.stamps_collected ?? 0;
+  const total = card?.template.total_stamps ?? 0;
+  const hasCard = !!card;
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: "#fff",
+        borderRadius: 18,
+        overflow: "hidden",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        cursor: "pointer",
+        border: "1px solid #F0F0F0",
+      }}
+    >
+      {/* Color header */}
+      <div
+        style={{
+          height: 72,
+          background: `linear-gradient(135deg, ${biz.logo_color}22, ${biz.logo_color}44)`,
+          display: "flex",
+          alignItems: "center",
+          padding: "0 16px",
+          gap: 12,
+          borderBottom: "1px solid #F5F5F5",
+        }}
+      >
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 22,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          {CAT_EMOJI[biz.category ?? ""] ?? biz.name[0]}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, fontFamily: MONO, color: "#0D0D0D", letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {biz.name.toUpperCase()}
+          </div>
+          <div style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.06em", marginTop: 2 }}>
+            {biz.category?.toUpperCase()}{biz.address ? ` · ${biz.address}` : ""}
+          </div>
+        </div>
+        <div style={{ fontSize: 10, fontFamily: MONO, color: "#9CA3AF" }}>★ {biz.rating}</div>
+      </div>
+
+      {/* Stamp row or join prompt */}
+      <div style={{ padding: "12px 16px" }}>
+        {hasCard ? (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.08em" }}>
+                {card!.is_completed ? "REWARD READY 🎁" : `${stamps}/${total} PUNCHES`}
+              </div>
+              <div style={{ fontSize: 9, fontFamily: MONO, color: card!.is_completed ? "#0D0D0D" : "#9CA3AF" }}>
+                {card!.is_completed ? "COMPLETE" : `${total - stamps} TO GO`}
+              </div>
+            </div>
+            {/* Punch dots */}
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {Array.from({ length: total }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    border: i < stamps ? "none" : "1.5px solid #DEDEDE",
+                    background: i < stamps ? "#0D0D0D" : "transparent",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : biz.active_template ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 10, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.06em" }}>
+              {biz.active_template.total_stamps} STAMPS → {biz.active_template.reward_description}
+            </div>
+            <div style={{ fontSize: 9, fontFamily: MONO, color: "#0D0D0D", letterSpacing: "0.08em", fontWeight: 700, whiteSpace: "nowrap", marginLeft: 8 }}>
+              JOIN →
+            </div>
+          </div>
+        ) : (
+          <div style={{ fontSize: 10, fontFamily: MONO, color: "#CACACA", letterSpacing: "0.06em" }}>
+            NO LOYALTY PROGRAM YET
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -35,121 +139,97 @@ export default function UserDashboard() {
 
   return (
     <UserLayout>
-      <div style={{ minHeight: "100vh", background: "#F8F7FF" }}>
+      <div style={{ minHeight: "100vh", background: "#F5F5F5" }}>
+
         {/* Header */}
-        <div style={{ background: "linear-gradient(160deg, #252178 0%, #3F3CA8 100%)", paddingTop: 52, paddingBottom: 28, paddingLeft: 20, paddingRight: 20 }}>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 4, fontWeight: 500 }}>Good day,</div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>
-            {user?.name?.split(" ")[0] ?? "Friend"} 👋
+        <div style={{ background: "#fff", padding: "52px 20px 20px", borderBottom: "1px solid #F0F0F0" }}>
+          <div style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.12em", marginBottom: 4 }}>
+            NEIGHBORGOOD
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, fontFamily: MONO, color: "#0D0D0D", letterSpacing: "-0.5px" }}>
+            {user?.name?.split(" ")[0]?.toUpperCase() ?? "WELCOME"}
           </div>
 
-          {/* Active cards pill */}
+          {/* Active cards summary */}
           {activeCards.length > 0 && (
             <div
               onClick={() => navigate("/wallet")}
-              style={{ marginTop: 16, background: "rgba(255,255,255,0.12)", borderRadius: 14, padding: "12px 16px", display: "flex", alignItems: "center", cursor: "pointer", backdropFilter: "blur(4px)" }}
+              style={{
+                marginTop: 14,
+                background: "#0D0D0D",
+                borderRadius: 12,
+                padding: "10px 14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                cursor: "pointer",
+              }}
             >
-              <div style={{ flex: 1 }}>
-                <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>
-                  {activeCards.length} active punchcard{activeCards.length !== 1 ? "s" : ""}
-                </div>
-                <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 1 }}>Tap to view your wallet</div>
+              <div style={{ fontSize: 10, fontFamily: MONO, color: "#fff", letterSpacing: "0.08em" }}>
+                {activeCards.length} ACTIVE PUNCHCARD{activeCards.length !== 1 ? "S" : ""}
               </div>
-              <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 22 }}>→</div>
+              <div style={{ fontSize: 10, fontFamily: MONO, color: "rgba(255,255,255,0.5)", letterSpacing: "0.08em" }}>
+                VIEW WALLET →
+              </div>
             </div>
           )}
         </div>
 
         {/* Category filter */}
-        <div style={{ padding: "16px 0 8px", overflowX: "auto" }}>
-          <div style={{ display: "flex", gap: 8, paddingLeft: 20, paddingRight: 20, width: "max-content" }}>
+        <div style={{ background: "#fff", borderBottom: "1px solid #F0F0F0", overflowX: "auto" }}>
+          <div style={{ display: "flex", gap: 0, padding: "0 4px", width: "max-content" }}>
             {CATEGORIES.map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
                 style={{
-                  padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
-                  fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
-                  background: category === cat ? "#3F3CA8" : "#fff",
-                  color: category === cat ? "#fff" : "#6B7280",
-                  boxShadow: category === cat ? "0 2px 8px rgba(63,60,168,0.3)" : "0 1px 4px rgba(0,0,0,0.06)",
+                  padding: "12px 14px",
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontSize: 10,
+                  fontFamily: MONO,
+                  fontWeight: category === cat ? 700 : 400,
+                  color: category === cat ? "#0D0D0D" : "#9CA3AF",
+                  letterSpacing: "0.08em",
+                  borderBottom: category === cat ? "2px solid #0D0D0D" : "2px solid transparent",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {cat !== "All" && CAT_EMOJI[cat] ? `${CAT_EMOJI[cat]} ` : ""}{cat}
+                {cat !== "All" && CAT_EMOJI[cat] ? `${CAT_EMOJI[cat]} ` : ""}
+                {cat.toUpperCase()}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Businesses list */}
-        <div style={{ padding: "12px 20px 100px" }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#1A1A2E", marginBottom: 14 }}>
-            {category === "All" ? "All Businesses" : `${CAT_EMOJI[category] ?? ""} ${category}`}
-            <span style={{ fontSize: 13, fontWeight: 400, color: "#9CA3AF", marginLeft: 8 }}>{filtered.length}</span>
-          </div>
-
+        {/* Businesses */}
+        <div style={{ padding: "16px 16px 100px" }}>
           {loading ? (
-            <div style={{ textAlign: "center", padding: 60, color: "#9CA3AF" }}>Loading...</div>
+            <div style={{ textAlign: "center", padding: 60, color: "#9CA3AF", fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em" }}>
+              LOADING...
+            </div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 60, color: "#9CA3AF" }}>
-              <div style={{ fontSize: 40, marginBottom: 10 }}>🔍</div>
-              <div style={{ fontWeight: 600 }}>No businesses in this category</div>
+            <div style={{ textAlign: "center", padding: "60px 20px", fontFamily: MONO }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>◉</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#0D0D0D", letterSpacing: "0.08em", marginBottom: 6 }}>
+                NO BUSINESSES HERE
+              </div>
+              <div style={{ fontSize: 10, color: "#9CA3AF", letterSpacing: "0.04em" }}>
+                CHECK BACK SOON
+              </div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {filtered.map(biz => {
                 const card = userCards.find(c => c.business.id === biz.id);
-                const pct = card ? (card.stamps_collected / card.template.total_stamps) * 100 : 0;
-
                 return (
-                  <div
+                  <BusinessCard
                     key={biz.id}
+                    biz={biz}
+                    card={card}
                     onClick={() => navigate(`/businesses/${biz.id}`)}
-                    style={{ background: "#fff", borderRadius: 18, overflow: "hidden", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", cursor: "pointer" }}
-                  >
-                    {/* Color bar */}
-                    <div style={{ height: 8, background: `linear-gradient(90deg, ${biz.logo_color}, ${biz.logo_color}88)` }} />
-
-                    <div style={{ padding: "14px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                        {/* Logo */}
-                        <div style={{ width: 48, height: 48, borderRadius: 14, background: `${biz.logo_color}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
-                          {CAT_EMOJI[biz.category ?? ""] ?? biz.name[0]}
-                        </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <div style={{ fontSize: 15, fontWeight: 700, color: "#1A1A2E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{biz.name}</div>
-                            <div style={{ fontSize: 13, color: "#F59E0B", fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>★ {biz.rating}</div>
-                          </div>
-                          <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
-                            {biz.category}{biz.address ? ` · ${biz.address}` : ""}
-                          </div>
-
-                          {card && (
-                            <div style={{ marginTop: 10 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#9CA3AF", marginBottom: 4 }}>
-                                <span style={{ fontWeight: 600, color: biz.logo_color }}>
-                                  {card.stamps_collected}/{card.template.total_stamps} stamps
-                                </span>
-                                {card.is_completed && <span style={{ color: "#059669", fontWeight: 700 }}>✓ Complete!</span>}
-                              </div>
-                              <div style={{ height: 5, background: "#F0F0F0", borderRadius: 999, overflow: "hidden" }}>
-                                <div style={{ height: "100%", background: biz.logo_color, width: `${pct}%`, borderRadius: 999, transition: "width 0.3s" }} />
-                              </div>
-                            </div>
-                          )}
-
-                          {!card && biz.active_template && (
-                            <div style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#6B48FF", fontWeight: 600 }}>
-                              <span>Join loyalty program</span>
-                              <span>→</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  />
                 );
               })}
             </div>

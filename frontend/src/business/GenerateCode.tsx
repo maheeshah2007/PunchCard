@@ -43,7 +43,7 @@ export default function GenerateCode() {
     } finally { setLoading(false); }
   }
 
-  const digits = code ? code.split("") : ["—", "—", "—", "—", "—", "—"];
+  const digits = code ? code.split("") : ["—", "—", "—", "—"];
   const progress = code ? (secondsLeft / 60) * 100 : 0;
   const isExpiring = secondsLeft > 0 && secondsLeft < 15;
 
@@ -148,7 +148,7 @@ export default function GenerateCode() {
         <div style={{ marginTop: 24, background: "#fff", borderRadius: 18, padding: "24px", boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#1A1A2E", marginBottom: 14 }}>How it works</div>
           {[
-            { step: "1", text: "Press \"Get Code\" to generate a unique 6-digit code" },
+            { step: "1", text: "Press \"Get Code\" to generate a unique 4-digit code" },
             { step: "2", text: "Show or share the code with your customer" },
             { step: "3", text: "Customer enters the code in their NeighborGood app" },
             { step: "4", text: "A stamp is automatically added to their punchcard" },
