@@ -114,8 +114,7 @@ export default function UserDashboard() {
     Promise.all([Businesses.list(), UserCards.list(authHeaders())]).then(([biz, cards]) => {
       setBusinesses(biz);
       setUserCards(cards);
-      setLoading(false);
-    });
+    }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   const firstName = user?.name?.split(" ")[0]?.toUpperCase() ?? "FRIEND";
