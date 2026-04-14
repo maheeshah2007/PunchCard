@@ -203,22 +203,30 @@ def seed_database(db: Session):
             db.add(UserDB(id=dev_id, email=f"{dev_id}@localhost", name=dev_name, role=dev_role))
     db.flush()
 
-    if db.query(BusinessDB).filter(BusinessDB.is_mock == True).first():
+    already_seeded = db.query(BusinessDB).filter(BusinessDB.is_mock == True).first()
+    if not already_seeded:
+        seed_owner = db.query(UserDB).filter(UserDB.id == SEED_OWNER_ID).first()
+        if not seed_owner:
+            seed_owner = UserDB(id=SEED_OWNER_ID, email="demo@neighborgood.app", name="NeighborGood Demo", role="business")
+            db.add(seed_owner)
+            db.flush()
+        for biz_data in SEED_BUSINESSES:
+            tmpl_data = biz_data.pop("template")
+            biz = BusinessDB(owner_id=SEED_OWNER_ID, is_mock=True, **biz_data)
+            db.add(biz)
+            db.flush()
+            db.add(PunchCardTemplateDB(business_id=biz.id, **tmpl_data))
+            biz_data["template"] = tmpl_data
         db.commit()
-        return
-    seed_owner = db.query(UserDB).filter(UserDB.id == SEED_OWNER_ID).first()
-    if not seed_owner:
-        seed_owner = UserDB(id=SEED_OWNER_ID, email="demo@neighborgood.app", name="NeighborGood Demo", role="business")
-        db.add(seed_owner)
-        db.flush()
-    for biz_data in SEED_BUSINESSES:
-        tmpl_data = biz_data.pop("template")
-        biz = BusinessDB(owner_id=SEED_OWNER_ID, is_mock=True, **biz_data)
-        db.add(biz)
-        db.flush()
-        db.add(PunchCardTemplateDB(business_id=biz.id, **tmpl_data))
-        biz_data["template"] = tmpl_data
-    db.commit()
+
+    # Seed dev customer with sample punchcards so the dashboard shows real data
+    dev_user = db.query(UserDB).filter(UserDB.id == "dev_user_00001").first()
+    if dev_user and not db.query(UserPunchCardDB).filter(UserPunchCardDB.user_id == "dev_user_00001").first():
+        templates = db.query(PunchCardTemplateDB).limit(3).all()
+        stamps = [4, 3, 4]  # stamps_collected for each card
+        for tmpl, s in zip(templates, stamps):
+            db.add(UserPunchCardDB(user_id="dev_user_00001", template_id=tmpl.id, stamps_collected=s))
+        db.commit()
 
 
 GOOGLE_CLIENT_ID = "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com"
