@@ -54,6 +54,10 @@ export const UserCards = {
   join: (templateId: number, headers: Record<string, string>) => request<UserPunchCard>(`/user/punchcards/${templateId}`, { method: "POST", headers }),
 };
 
+export const Dev = {
+  reset: () => request<{ ok: boolean; message: string }>("/dev/reset", { method: "POST" }),
+};
+
 export const AuthCodes = {
   generate: (templateId: number, headers: Record<string, string>) => request<AuthCodeResult>("/auth-codes/generate", { method: "POST", body: JSON.stringify({ template_id: templateId }), headers }),
   redeem: (code: string, businessId: number, headers: Record<string, string>) => request<{ ok: boolean; stamps_collected: number; is_completed: boolean; punchcard: UserPunchCard }>("/auth-codes/redeem", { method: "POST", body: JSON.stringify({ code, business_id: businessId }), headers }),

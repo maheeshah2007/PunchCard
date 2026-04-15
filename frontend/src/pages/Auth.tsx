@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Auth as AuthAPI } from "../api";
+import { Auth as AuthAPI, Dev } from "../api";
 import { useAuth } from "../context/AuthContext";
 import MobileShell from "../components/MobileShell";
 
@@ -132,7 +132,7 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
           {/* Dev bypass */}
           <div style={{ borderTop: "1px solid #D1D5DB", paddingTop: 14, marginBottom: 20 }}>
             <div style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", textAlign: "center", marginBottom: 10, letterSpacing: "0.08em" }}>DEV BYPASS</div>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
               <button
                 onClick={() => { setUser({ sub: "dev_user_00001", email: "dev-user@localhost", name: "Dev Customer", picture: undefined, role: "user" }); navigate("/dashboard"); }}
                 style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: "none", background: "#0D0D0D", color: "#fff", fontSize: 9, fontFamily: MONO, cursor: "pointer" }}
@@ -142,6 +142,10 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
                 style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: "none", background: "#3F3CA8", color: "#fff", fontSize: 9, fontFamily: MONO, cursor: "pointer" }}
               >BUSINESS</button>
             </div>
+            <button
+              onClick={async () => { await Dev.reset(); alert("Data reset! Business user will re-run onboarding."); }}
+              style={{ width: "100%", padding: "8px", borderRadius: 8, border: "1px solid #FCA5A5", background: "#FEF2F2", color: "#DC2626", fontSize: 9, fontFamily: MONO, cursor: "pointer" }}
+            >🗑 RESET ALL DATA</button>
           </div>
 
           <div style={{ textAlign: "center", fontSize: 10, fontFamily: MONO, color: "#0D0D0D", letterSpacing: "0.06em" }}>

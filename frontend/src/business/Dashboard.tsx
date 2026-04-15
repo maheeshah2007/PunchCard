@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Businesses, BusinessStats, Business } from "../api";
+import { Businesses, BusinessStats, Business, Dev } from "../api";
 import BusinessLayout from "./Layout";
 
 const STATS = [
@@ -129,6 +129,20 @@ export default function BusinessDashboard() {
           </button>
         </div>
       )}
+      {/* Dev Reset */}
+      <div style={{ marginTop: 48, borderTop: "1px solid #F0F0F0", paddingTop: 24 }}>
+        <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 10, fontWeight: 600, letterSpacing: "0.06em" }}>DEV TOOLS</div>
+        <button
+          onClick={async () => {
+            if (!confirm("Reset all data? This clears cards, templates, and your business so you can re-run onboarding.")) return;
+            await Dev.reset();
+            window.location.href = "/business/dashboard";
+          }}
+          style={{ padding: "10px 20px", borderRadius: 9, border: "1.5px solid #FCA5A5", background: "#FEF2F2", color: "#DC2626", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+        >
+          🗑 Reset All Data (re-run onboarding)
+        </button>
+      </div>
     </BusinessLayout>
   );
 }

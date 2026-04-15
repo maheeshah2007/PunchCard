@@ -322,6 +322,31 @@ def serialize_user_punchcard(upc: UserPunchCardDB) -> dict:
 def health():
     return {"ok": True}
 
+@app.post("/dev/reset")
+def dev_reset(db: Session = Depends(get_db)):
+    """Dev-only: wipe all non-seed data and reseed fresh."""
+    # Delete all auth codes, user punchcards, non-seed businesses
+    db.query(AuthCodeDB).delete()
+    db.query(UserPunchCardDB).delete()
+    non_seed_biz = db.query(BusinessDB).filter(BusinessDB.is_mock == False).all()
+    for b in non_seed_biz:
+        db.query(PunchCardTemplateDB).filter(PunchCardTemplateDB.business_id == b.id).delete()
+        db.delete(b)
+    # Reset dev users
+    for dev_id in ["dev_user_00001", "dev_business_00001"]:
+        db.query(UserDB).filter(UserDB.id == dev_id).delete()
+    db.flush()
+    # Re-seed dev users
+    db.add(UserDB(id="dev_user_00001", email="dev-user@localhost", name="Dev Customer", role="user"))
+    db.add(UserDB(id="dev_business_00001", email="dev-business@localhost", name="Dev Business", role="business"))
+    db.flush()
+    # Re-seed sample punchcards for dev customer
+    templates = db.query(PunchCardTemplateDB).limit(3).all()
+    for tmpl, s in zip(templates, [4, 3, 4]):
+        db.add(UserPunchCardDB(user_id="dev_user_00001", template_id=tmpl.id, stamps_collected=s))
+    db.commit()
+    return {"ok": True, "message": "Data reset. Dev business needs to re-run onboarding."}
+
 @app.post("/auth/dev-login")
 def dev_login(role: str = "user", db: Session = Depends(get_db)):
     """Dev-only bypass — skips Google OAuth for local testing."""
