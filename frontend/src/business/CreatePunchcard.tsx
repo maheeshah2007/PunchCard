@@ -14,10 +14,11 @@ const BG_STYLE: React.CSSProperties = {
     "radial-gradient(ellipse 45% 55% at 90% 15%, rgba(110,110,110,0.25) 0%, transparent 65%)",
   ].join(", "),
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-start",
   justifyContent: "center",
-  padding: 32,
+  padding: "40px 32px",
   boxSizing: "border-box",
+  overflowY: "auto",
 };
 
 const CARD_COLORS = [
@@ -75,7 +76,7 @@ function LivePreview({
               background: i < filled ? stampColor : "transparent",
               border: `2px solid ${i < filled ? stampColor : `${stampColor}55`}`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 14, color: i < filled ? (isLight ? "#1A1A1A" : "#fff") : `${stampColor}88`,
+              fontSize: i < filled ? 18 : 0, color: i < filled ? (isLight ? "#1A1A1A" : "#fff") : `${stampColor}88`,
             }}>
               {i < filled ? stampIcon : ""}
             </div>
@@ -92,7 +93,7 @@ function LivePreview({
                 background: f ? stampColor : "transparent",
                 border: `2px solid ${f ? stampColor : `${cardTextColor}33`}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: f ? 16 : (isLast ? 14 : 10),
+                fontSize: f ? 26 : (isLast ? 18 : 10),
                 color: f ? (isLight ? "#1A1A1A" : "#fff") : (isLast ? `${cardTextColor}30` : `${cardTextColor}60`),
                 fontWeight: 700,
               }}>

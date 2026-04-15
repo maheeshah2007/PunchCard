@@ -56,6 +56,7 @@ export const UserCards = {
 
 export const Dev = {
   reset: () => request<{ ok: boolean; message: string }>("/dev/reset", { method: "POST" }),
+  resetBusiness: () => request<{ ok: boolean; message: string }>("/dev/reset-business", { method: "POST" }),
 };
 
 export const AuthCodes = {

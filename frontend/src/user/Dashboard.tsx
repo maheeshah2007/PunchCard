@@ -7,8 +7,15 @@ import UserLayout from "./Layout";
 const MONO = "'Space Mono', monospace";
 
 const CAT_EMOJI: Record<string, string> = {
+  // legacy
   Coffee: "☕", Food: "🍕", Books: "📚", Fitness: "💪",
   Beauty: "💇", Retail: "🛍️", Other: "🏪",
+  // new onboarding categories
+  "BEAUTY & PERSONAL CARE": "💇", "EDUCATION & TUTORING": "📚",
+  "ENTERTAINMENT": "🎵", "FITNESS & RECREATIONAL": "💪",
+  "FOOD & BEVERAGE": "🍕", "HEALTH & WELLNESS": "🌿",
+  "HOME SERVICES": "🏠", "TECHNOLOGY SERVICES": "💻",
+  "OTHER": "🏪",
 };
 
 /* Punchcard matching Component 1.png — uses template's saved colors/icon */
@@ -43,7 +50,7 @@ function PunchCard({ card, onClick }: { card: UserPunchCard; onClick: () => void
           {Array.from({ length: gridCount }).map((_, i) => {
             const filled = i < stamps_collected;
             return (
-              <div key={i} style={{ width: 30, height: 30, borderRadius: "50%", background: filled ? stampFill : "transparent", border: `2px solid ${filled ? stampFill : `${cardText}33`}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: filled ? (isLightStamp ? "#1A1A1A" : "#fff") : `${cardText}55` }}>
+              <div key={i} style={{ width: 30, height: 30, borderRadius: "50%", background: filled ? stampFill : "transparent", border: `2px solid ${filled ? stampFill : `${cardText}33`}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: filled ? 16 : 0, color: filled ? (isLightStamp ? "#1A1A1A" : "#fff") : `${cardText}55` }}>
                 {filled ? stampIcon : ""}
               </div>
             );
@@ -55,7 +62,7 @@ function PunchCard({ card, onClick }: { card: UserPunchCard; onClick: () => void
             const filled = i < stamps_collected;
             const isLast = i === gridCount - 1;
             return (
-              <div key={i} style={{ aspectRatio: "1", borderRadius: "50%", background: filled ? stampFill : "transparent", border: `2px solid ${filled ? stampFill : `${cardText}33`}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: filled ? 16 : (isLast ? 13 : 10), fontFamily: MONO, color: filled ? (isLightStamp ? "#1A1A1A" : "#fff") : (isLast ? `${cardText}25` : `${cardText}60`), fontWeight: 700 }}>
+              <div key={i} style={{ aspectRatio: "1", borderRadius: "50%", background: filled ? stampFill : "transparent", border: `2px solid ${filled ? stampFill : `${cardText}33`}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: filled ? 26 : (isLast ? 18 : 10), fontFamily: MONO, color: filled ? (isLightStamp ? "#1A1A1A" : "#fff") : (isLast ? `${cardText}25` : `${cardText}60`), fontWeight: 700 }}>
                 {filled ? stampIcon : (isLast ? stampIcon : (i + 1).toString().padStart(2, "0"))}
               </div>
             );

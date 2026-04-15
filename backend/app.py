@@ -347,6 +347,20 @@ def dev_reset(db: Session = Depends(get_db)):
     db.commit()
     return {"ok": True, "message": "Data reset. Dev business needs to re-run onboarding."}
 
+@app.post("/dev/reset-business")
+def dev_reset_business(db: Session = Depends(get_db)):
+    """Dev-only: delete dev_business_00001's business so they re-run onboarding."""
+    biz = db.query(BusinessDB).filter(BusinessDB.owner_id == "dev_business_00001").first()
+    if biz:
+        template_ids = [t.id for t in biz.templates]
+        if template_ids:
+            db.query(UserPunchCardDB).filter(UserPunchCardDB.template_id.in_(template_ids)).delete(synchronize_session=False)
+            db.query(AuthCodeDB).filter(AuthCodeDB.business_id == biz.id).delete()
+            db.query(PunchCardTemplateDB).filter(PunchCardTemplateDB.business_id == biz.id).delete()
+        db.delete(biz)
+        db.commit()
+    return {"ok": True, "message": "Business deleted. Re-run onboarding to create a new one."}
+
 @app.post("/auth/dev-login")
 def dev_login(role: str = "user", db: Session = Depends(get_db)):
     """Dev-only bypass — skips Google OAuth for local testing."""
