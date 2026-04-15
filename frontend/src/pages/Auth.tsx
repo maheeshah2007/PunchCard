@@ -214,7 +214,7 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
         </div>
 
         {/* Divider gap */}
-        <div style={{ height: 8, marginBottom: 16 }} />
+        <div style={{ height: 1, background: "#B0B0B0", marginBottom: 24 }} />
 
         {/* First + Last name row */}
         <div style={{ display: "flex", gap: 20, marginBottom: 24 }}>

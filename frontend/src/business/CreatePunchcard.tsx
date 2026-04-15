@@ -2,7 +2,23 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Templates } from "../api";
-import BusinessLayout from "./Layout";
+
+const PIXEL = "'Press Start 2P', monospace";
+const MONO  = "'Space Mono', monospace";
+
+const BG_STYLE: React.CSSProperties = {
+  minHeight: "100vh",
+  background: "#2D2D2D",
+  backgroundImage: [
+    "radial-gradient(ellipse 65% 75% at 10% 50%, rgba(155,155,155,0.35) 0%, transparent 65%)",
+    "radial-gradient(ellipse 45% 55% at 90% 15%, rgba(110,110,110,0.25) 0%, transparent 65%)",
+  ].join(", "),
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 32,
+  boxSizing: "border-box",
+};
 
 const CARD_COLORS = [
   "#1A1A1A", "#3F3CA8", "#1D4ED8", "#0F766E",
@@ -120,7 +136,7 @@ export default function CreatePunchcard() {
     stamp_icon: "☕",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError]     = useState("");
   const [success, setSuccess] = useState(false);
   const [customEmoji, setCustomEmoji] = useState("");
 
@@ -139,145 +155,246 @@ export default function CreatePunchcard() {
     } finally { setLoading(false); }
   }
 
+  /* ── shared label style for the dark right panel ── */
+  const darkLabel: React.CSSProperties = {
+    display: "block",
+    fontFamily: MONO,
+    fontSize: 10,
+    color: "#D0D0D0",
+    letterSpacing: "0.08em",
+    marginBottom: 8,
+  };
+
+  const underlineInput: React.CSSProperties = {
+    width: "100%",
+    padding: "10px 0",
+    border: "none",
+    borderBottom: "1.5px solid #6A6A6A",
+    background: "transparent",
+    fontFamily: MONO,
+    fontSize: 13,
+    color: "#F0F0F0",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
   return (
-    <BusinessLayout>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1A1A2E", letterSpacing: "-0.5px" }}>Create Punchcard</h1>
-        <p style={{ fontSize: 15, color: "#6B7280", marginTop: 4 }}>Design your loyalty card program</p>
-      </div>
+    <div style={BG_STYLE}>
+      <div style={{
+        background: "#CACACA",
+        borderRadius: 24,
+        padding: "44px 40px",
+        width: "100%",
+        maxWidth: 960,
+        boxSizing: "border-box",
+      }}>
+        {/* Page heading */}
+        <div style={{ textAlign: "center", marginBottom: 8 }}>
+          <div style={{ fontFamily: PIXEL, fontSize: 18, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.7 }}>
+            GENERATE YOUR PUNCHCARD
+          </div>
+        </div>
+        <div style={{ textAlign: "center", fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "#4B4B4B", marginBottom: 32 }}>
+          CREATE A CUSTOMIZED PUNCHCARD FOR YOUR AUDIENCE
+        </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 28, alignItems: "start" }}>
-        {/* ── Form ── */}
+        {/* Two sub-panels side by side */}
         <form onSubmit={submit}>
-          <div style={{ background: "#fff", borderRadius: 20, padding: "28px 32px", boxShadow: "0 2px 16px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 24 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start", marginBottom: 28 }}>
 
-            {/* Card Name */}
-            <div>
-              <label style={labelStyle}>Card Name</label>
-              <input required value={form.name} onChange={e => upd("name", e.target.value)}
-                style={inputStyle} />
-            </div>
-
-            {/* Reward */}
-            <div>
-              <label style={labelStyle}>Reward Description</label>
-              <input required value={form.reward_description} onChange={e => upd("reward_description", e.target.value)}
-                placeholder="e.g. Free coffee of your choice!"
-                style={inputStyle} />
-            </div>
-
-            {/* Stamps count */}
-            <div>
-              <label style={labelStyle}>
-                Number of Stamps &nbsp;<span style={{ color: "#3F3CA8", fontWeight: 700 }}>{form.total_stamps}</span>
-              </label>
-              <input type="range" min={4} max={16} value={form.total_stamps}
-                onChange={e => upd("total_stamps", Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#3F3CA8" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#9CA3AF", marginTop: 2 }}>
-                <span>4</span><span>16</span>
+            {/* ── LEFT: Live Preview ── */}
+            <div style={{ background: "#9A9A9A", borderRadius: 14, padding: "28px 24px" }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: "#3A3A3A", letterSpacing: "0.08em", marginBottom: 16 }}>
+                LIVE PREVIEW
               </div>
+              <LivePreview
+                name={form.name}
+                reward={form.reward_description}
+                total={form.total_stamps}
+                cardColor={form.card_color}
+                stampColor={form.stamp_color}
+                stampIcon={form.stamp_icon}
+                layout={form.style}
+                filled={previewFilled}
+              />
+              <p style={{ fontSize: 10, fontFamily: MONO, color: "#5A5A5A", textAlign: "center", marginTop: 14, letterSpacing: "0.04em" }}>
+                THIS IS HOW YOUR CARD APPEARS TO CUSTOMERS
+              </p>
             </div>
 
-            {/* Layout */}
-            <div>
-              <label style={labelStyle}>Layout</label>
-              <div style={{ display: "flex", gap: 10 }}>
-                {LAYOUTS.map(l => (
-                  <button key={l.id} type="button" onClick={() => upd("style", l.id)}
-                    style={{ ...chipStyle, ...(form.style === l.id ? chipActive : {}) }}>
-                    <span style={{ fontSize: 13, fontWeight: 700 }}>{l.label}</span>
-                    <span style={{ fontSize: 11, color: form.style === l.id ? "#3F3CA8" : "#9CA3AF" }}>{l.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* ── RIGHT: Form fields ── */}
+            <div style={{ background: "#9A9A9A", borderRadius: 14, padding: "28px 24px", display: "flex", flexDirection: "column", gap: 22 }}>
 
-            {/* Card color */}
-            <div>
-              <label style={labelStyle}>Card Color</label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {CARD_COLORS.map(c => (
-                  <button key={c} type="button" onClick={() => upd("card_color", c)}
-                    style={{ width: 34, height: 34, borderRadius: "50%", background: c, border: form.card_color === c ? "3px solid #3F3CA8" : "2px solid #E5E7EB", cursor: "pointer", outline: form.card_color === c ? "2px solid #3F3CA8" : "none", outlineOffset: 2 }} />
-                ))}
-                <input type="color" value={form.card_color} onChange={e => upd("card_color", e.target.value)}
-                  title="Custom color"
-                  style={{ width: 34, height: 34, borderRadius: "50%", border: "2px solid #E5E7EB", cursor: "pointer", padding: 2, background: "none" }} />
+              {/* Card Name */}
+              <div>
+                <label style={darkLabel}>CARD NAME</label>
+                <input
+                  required
+                  value={form.name}
+                  onChange={e => upd("name", e.target.value)}
+                  placeholder="CARD NAME"
+                  style={underlineInput}
+                />
               </div>
-            </div>
 
-            {/* Stamp color */}
-            <div>
-              <label style={labelStyle}>Stamp Color</label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {STAMP_COLORS.map(c => (
-                  <button key={c} type="button" onClick={() => upd("stamp_color", c)}
-                    style={{ width: 34, height: 34, borderRadius: "50%", background: c, border: form.stamp_color === c ? "3px solid #3F3CA8" : "2px solid #E5E7EB", cursor: "pointer", outline: form.stamp_color === c ? "2px solid #3F3CA8" : "none", outlineOffset: 2 }} />
-                ))}
-                <input type="color" value={form.stamp_color} onChange={e => upd("stamp_color", e.target.value)}
-                  title="Custom color"
-                  style={{ width: 34, height: 34, borderRadius: "50%", border: "2px solid #E5E7EB", cursor: "pointer", padding: 2, background: "none" }} />
+              {/* Reward Description */}
+              <div>
+                <label style={darkLabel}>REWARD DESCRIPTION</label>
+                <input
+                  required
+                  value={form.reward_description}
+                  onChange={e => upd("reward_description", e.target.value)}
+                  placeholder="E.G. FREE COFFEE OF YOUR CHOICE!"
+                  style={underlineInput}
+                />
               </div>
-            </div>
 
-            {/* Stamp icon */}
-            <div>
-              <label style={labelStyle}>Stamp Icon</label>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                {STAMP_EMOJIS.map(e => (
-                  <button key={e} type="button" onClick={() => { upd("stamp_icon", e); setCustomEmoji(""); }}
-                    style={{ width: 38, height: 38, borderRadius: 10, border: form.stamp_icon === e ? "2px solid #3F3CA8" : "1.5px solid #E5E7EB", background: form.stamp_icon === e ? "#F5F4FF" : "#fff", fontSize: 20, cursor: "pointer" }}>
-                    {e}
-                  </button>
-                ))}
+              {/* Stamps slider */}
+              <div>
+                <label style={darkLabel}>
+                  NUMBER OF STAMPS &nbsp;
+                  <span style={{ color: "#F0F0F0", fontWeight: 700 }}>{form.total_stamps}</span>
+                </label>
+                <input
+                  type="range" min={4} max={16}
+                  value={form.total_stamps}
+                  onChange={e => upd("total_stamps", Number(e.target.value))}
+                  style={{ width: "100%", accentColor: "#1A1A1A" }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontFamily: MONO, fontSize: 10, color: "#AAAAAA", marginTop: 2 }}>
+                  <span>4</span><span>16</span>
+                </div>
               </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+
+              {/* Layout toggle */}
+              <div>
+                <label style={darkLabel}>LAYOUT</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {LAYOUTS.map(l => (
+                    <button
+                      key={l.id} type="button"
+                      onClick={() => upd("style", l.id)}
+                      style={{
+                        flex: 1, padding: "10px 12px", borderRadius: 10,
+                        border: form.style === l.id ? "2px solid #1A1A1A" : "1.5px solid #7A7A7A",
+                        background: form.style === l.id ? "#1A1A1A" : "transparent",
+                        cursor: "pointer",
+                        display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2,
+                      }}
+                    >
+                      <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: form.style === l.id ? "#fff" : "#D0D0D0" }}>{l.label}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: form.style === l.id ? "#AAAAFF" : "#888888" }}>{l.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Card color swatches */}
+              <div>
+                <label style={darkLabel}>CARD COLOR</label>
+                <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                  {CARD_COLORS.map(c => (
+                    <button key={c} type="button" onClick={() => upd("card_color", c)}
+                      style={{
+                        width: 30, height: 30, borderRadius: "50%", background: c,
+                        border: form.card_color === c ? "3px solid #F0F0F0" : "2px solid #6A6A6A",
+                        cursor: "pointer", outline: form.card_color === c ? "2px solid #F0F0F0" : "none",
+                        outlineOffset: 2,
+                      }}
+                    />
+                  ))}
+                  <input type="color" value={form.card_color} onChange={e => upd("card_color", e.target.value)}
+                    title="Custom color"
+                    style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid #6A6A6A", cursor: "pointer", padding: 2, background: "none" }}
+                  />
+                </div>
+              </div>
+
+              {/* Stamp color swatches */}
+              <div>
+                <label style={darkLabel}>STAMP COLOR</label>
+                <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                  {STAMP_COLORS.map(c => (
+                    <button key={c} type="button" onClick={() => upd("stamp_color", c)}
+                      style={{
+                        width: 30, height: 30, borderRadius: "50%", background: c,
+                        border: form.stamp_color === c ? "3px solid #F0F0F0" : "2px solid #6A6A6A",
+                        cursor: "pointer", outline: form.stamp_color === c ? "2px solid #F0F0F0" : "none",
+                        outlineOffset: 2,
+                      }}
+                    />
+                  ))}
+                  <input type="color" value={form.stamp_color} onChange={e => upd("stamp_color", e.target.value)}
+                    title="Custom color"
+                    style={{ width: 30, height: 30, borderRadius: "50%", border: "2px solid #6A6A6A", cursor: "pointer", padding: 2, background: "none" }}
+                  />
+                </div>
+              </div>
+
+              {/* Emoji picker */}
+              <div>
+                <label style={darkLabel}>STAMP ICON</label>
+                <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 8 }}>
+                  {STAMP_EMOJIS.map(e => (
+                    <button key={e} type="button"
+                      onClick={() => { upd("stamp_icon", e); setCustomEmoji(""); }}
+                      style={{
+                        width: 34, height: 34, borderRadius: 8,
+                        border: form.stamp_icon === e ? "2px solid #F0F0F0" : "1.5px solid #7A7A7A",
+                        background: form.stamp_icon === e ? "#1A1A1A" : "transparent",
+                        fontSize: 18, cursor: "pointer",
+                      }}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
                 <input
                   value={customEmoji}
                   onChange={e => { setCustomEmoji(e.target.value); if (e.target.value) upd("stamp_icon", e.target.value); }}
-                  placeholder="Or type any emoji…"
+                  placeholder="OR TYPE ANY EMOJI…"
                   maxLength={2}
-                  style={{ ...inputStyle, width: 180, fontSize: 18, textAlign: "center" }}
+                  style={{ ...underlineInput, width: 180, fontSize: 18, textAlign: "center" }}
                 />
               </div>
             </div>
-
-            {error && <div style={{ background: "#FEF2F2", borderRadius: 10, padding: "12px 16px", color: "#DC2626", fontSize: 14 }}>{error}</div>}
-            {success && <div style={{ background: "#F0FFF4", borderRadius: 10, padding: "12px 16px", color: "#059669", fontSize: 14, fontWeight: 600 }}>✓ Punchcard created! Redirecting...</div>}
-
-            <button type="submit" disabled={loading || success}
-              style={{ width: "100%", padding: "15px", borderRadius: 13, border: "none", background: (loading || success) ? "#D1D5DB" : "linear-gradient(180deg, #3F3CA8 0%, #252178 100%)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: (loading || success) ? "not-allowed" : "pointer" }}>
-              {loading ? "Creating..." : success ? "Created!" : "Create Punchcard →"}
-            </button>
           </div>
+
+          {error && (
+            <div style={{
+              background: "#FEE2E2", borderRadius: 8,
+              padding: "10px 14px", color: "#DC2626",
+              fontFamily: MONO, fontSize: 11, marginBottom: 16,
+            }}>
+              {error}
+            </div>
+          )}
+          {success && (
+            <div style={{
+              background: "#D1FAE5", borderRadius: 8,
+              padding: "10px 14px", color: "#059669",
+              fontFamily: MONO, fontSize: 11, fontWeight: 700, marginBottom: 16,
+            }}>
+              PUNCHCARD CREATED! REDIRECTING...
+            </div>
+          )}
+
+          {/* CREATE PUNCHCARD button — full width, below panels */}
+          <button
+            type="submit"
+            disabled={loading || success}
+            style={{
+              width: "100%", padding: "18px", borderRadius: 999, border: "none",
+              background: loading || success ? "#9A9A9A" : "#1A1A1A",
+              color: "#fff", fontFamily: MONO, fontSize: 12,
+              fontWeight: 700, letterSpacing: "0.12em",
+              cursor: loading || success ? "not-allowed" : "pointer",
+            }}
+          >
+            {loading ? "CREATING..." : success ? "CREATED!" : "CREATE PUNCHCARD"}
+          </button>
         </form>
-
-        {/* ── Live Preview ── */}
-        <div style={{ position: "sticky", top: 24 }}>
-          <div style={{ background: "#fff", borderRadius: 20, padding: "24px", boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 16 }}>Live Preview</div>
-            <LivePreview
-              name={form.name}
-              reward={form.reward_description}
-              total={form.total_stamps}
-              cardColor={form.card_color}
-              stampColor={form.stamp_color}
-              stampIcon={form.stamp_icon}
-              layout={form.style}
-              filled={previewFilled}
-            />
-            <p style={{ fontSize: 12, color: "#9CA3AF", textAlign: "center", marginTop: 12 }}>
-              This is how your card appears to customers
-            </p>
-          </div>
-        </div>
       </div>
-    </BusinessLayout>
+    </div>
   );
 }
-
-const labelStyle: React.CSSProperties = { display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 8 };
-const inputStyle: React.CSSProperties = { width: "100%", padding: "11px 14px", borderRadius: 10, border: "1.5px solid #E5E7EB", fontSize: 14, outline: "none", boxSizing: "border-box" };
-const chipStyle: React.CSSProperties = { flex: 1, padding: "12px 14px", borderRadius: 12, border: "1.5px solid #E5E7EB", background: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 };
-const chipActive: React.CSSProperties = { border: "2px solid #3F3CA8", background: "#F5F4FF" };

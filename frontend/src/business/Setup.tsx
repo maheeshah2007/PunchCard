@@ -62,19 +62,18 @@ const CATEGORIES: [string, string][] = [
   ["HOME SERVICES",          "RETAIL"],
   ["TECHNOLOGY SERVICES",    "OTHER"],
 ];
-const FLAT_CATEGORIES = CATEGORIES.flat();
 
 export default function BusinessSetup() {
   const navigate = useNavigate();
   const { authHeaders, user } = useAuth();
 
-  const [step, setStep] = useState(1);
-  const [name, setName]           = useState("");
-  const [phone, setPhone]         = useState("");
+  const [step, setStep]               = useState(1);
+  const [name, setName]               = useState("");
+  const [phone, setPhone]             = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory]   = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState("");
+  const [category, setCategory]       = useState("");
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState("");
 
   const firstName = user?.name?.split(" ")[0]?.toUpperCase() ?? "USER";
 
@@ -104,15 +103,16 @@ export default function BusinessSetup() {
   return (
     <div style={BG_STYLE}>
       <div style={OUTER_PANEL}>
+
         {/* ── STEP 1 ── */}
         {step === 1 && (
           <div>
-            {/* Heading */}
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ fontFamily: PIXEL, fontSize: 18, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.6 }}>
+            {/* Heading — two lines */}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontFamily: PIXEL, fontSize: 18, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.7 }}>
                 HI {firstName}!
               </div>
-              <div style={{ fontFamily: PIXEL, fontSize: 18, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.6 }}>
+              <div style={{ fontFamily: PIXEL, fontSize: 18, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.7 }}>
                 PLEASE CREATE YOUR COMPANY PROFILE!
               </div>
             </div>
@@ -124,12 +124,13 @@ export default function BusinessSetup() {
 
             {/* Avatar row */}
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 32 }}>
+              {/* Gray circle avatar */}
               <div style={{
                 width: 56, height: 56, borderRadius: "50%",
                 background: "#ABABAB", flexShrink: 0,
               }} />
+              {/* Image icon + upload text */}
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {/* Picture-frame icon */}
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="2" y="2" width="18" height="18" rx="3" stroke="#6B6B6B" strokeWidth="1.5" fill="none"/>
                   <circle cx="7.5" cy="7.5" r="2" stroke="#6B6B6B" strokeWidth="1.2" fill="none"/>
@@ -145,7 +146,7 @@ export default function BusinessSetup() {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="BUSINESS NAME"
-                style={{ ...UNDERLINE_INPUT, "::placeholder": { color: "#9A9A9A" } } as React.CSSProperties}
+                style={UNDERLINE_INPUT}
               />
               <input
                 value={phone}
@@ -164,7 +165,11 @@ export default function BusinessSetup() {
             <button
               onClick={() => { if (name.trim()) setStep(2); }}
               disabled={!name.trim()}
-              style={{ ...SUBMIT_BTN, background: name.trim() ? "#1A1A1A" : "#9A9A9A", cursor: name.trim() ? "pointer" : "not-allowed" }}
+              style={{
+                ...SUBMIT_BTN,
+                background: name.trim() ? "#1A1A1A" : "#9A9A9A",
+                cursor: name.trim() ? "pointer" : "not-allowed",
+              }}
             >
               SUBMIT
             </button>
@@ -175,16 +180,23 @@ export default function BusinessSetup() {
         {step === 2 && (
           <div>
             {/* Heading */}
-            <div style={{ fontFamily: PIXEL, fontSize: 16, fontWeight: 700, color: "#1A1A1A", textAlign: "center", lineHeight: 1.8, marginBottom: 10 }}>
+            <div style={{
+              fontFamily: PIXEL, fontSize: 16, fontWeight: 700,
+              color: "#1A1A1A", textAlign: "center",
+              lineHeight: 1.8, marginBottom: 10,
+            }}>
               SELECT THE CATEGORY THAT BEST DESCRIBES YOUR BUSINESS:
             </div>
 
             {/* Subtitle */}
-            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "#4B4B4B", textAlign: "center", marginBottom: 28 }}>
+            <div style={{
+              fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em",
+              color: "#4B4B4B", textAlign: "center", marginBottom: 28,
+            }}>
               THIS HELPS CUSTOMERS DISCOVER YOUR BUSINESS.
             </div>
 
-            {/* Inner dark panel with grid */}
+            {/* Inner dark panel with 2-column checkbox grid */}
             <div style={{ background: "#9A9A9A", borderRadius: 14, padding: "20px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
               {CATEGORIES.map(([left, right]) => (
                 <div key={left} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -207,15 +219,11 @@ export default function BusinessSetup() {
                     >
                       {/* Checkbox visual */}
                       <div style={{
-                        width: 14,
-                        height: 14,
-                        borderRadius: 3,
+                        width: 14, height: 14, borderRadius: 3,
                         border: "1.5px solid #5A5A5A",
                         background: category === cat ? "#1A1A1A" : "transparent",
                         flexShrink: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: "flex", alignItems: "center", justifyContent: "center",
                       }}>
                         {category === cat && (
                           <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
@@ -233,7 +241,11 @@ export default function BusinessSetup() {
             </div>
 
             {error && (
-              <div style={{ background: "#FEE2E2", borderRadius: 8, padding: "10px 14px", color: "#DC2626", fontFamily: MONO, fontSize: 11, marginTop: 16 }}>
+              <div style={{
+                background: "#FEE2E2", borderRadius: 8,
+                padding: "10px 14px", color: "#DC2626",
+                fontFamily: MONO, fontSize: 11, marginTop: 16,
+              }}>
                 {error}
               </div>
             )}
