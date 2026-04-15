@@ -57,6 +57,7 @@ class BusinessDB(Base):
     address = Column(String, nullable=True)
     logo_color = Column(String, default="#6B48FF")
     cover_color = Column(String, default="#EDE9FF")
+    logo_image = Column(Text, nullable=True)
     rating = Column(Float, default=0.0)
     is_mock = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -241,6 +242,17 @@ app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
+    # Add new columns to existing DBs without losing data
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        for stmt in [
+            "ALTER TABLE businesses ADD COLUMN logo_image TEXT",
+        ]:
+            try:
+                conn.execute(text(stmt))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
     db = SessionLocal()
     try:
         seed_database(db)
@@ -261,6 +273,7 @@ class CreateBusinessRequest(BaseModel):
     address: Optional[str] = None
     logo_color: Optional[str] = "#6B48FF"
     cover_color: Optional[str] = "#EDE9FF"
+    logo_image: Optional[str] = None
 
 class UpdateBusinessRequest(BaseModel):
     name: Optional[str] = None
@@ -269,6 +282,7 @@ class UpdateBusinessRequest(BaseModel):
     address: Optional[str] = None
     logo_color: Optional[str] = None
     cover_color: Optional[str] = None
+    logo_image: Optional[str] = None
 
 class CreateTemplateRequest(BaseModel):
     name: str
@@ -310,7 +324,7 @@ def serialize_business(b: BusinessDB, include_template: bool = True) -> dict:
         active = [t for t in b.templates if t.is_active]
         if active:
             active_template = serialize_template(active[0])
-    return {"id": b.id, "name": b.name, "description": b.description, "category": b.category, "address": b.address, "logo_color": b.logo_color, "cover_color": b.cover_color, "rating": b.rating, "active_template": active_template}
+    return {"id": b.id, "name": b.name, "description": b.description, "category": b.category, "address": b.address, "logo_color": b.logo_color, "cover_color": b.cover_color, "logo_image": b.logo_image, "rating": b.rating, "active_template": active_template}
 
 def serialize_user_punchcard(upc: UserPunchCardDB) -> dict:
     t = upc.template

@@ -133,6 +133,14 @@ function StudentCard({ biz, onClick }: { biz: Business; onClick: () => void }) {
   );
 }
 
+const ALL_CATEGORIES = [
+  "FOOD & BEVERAGE", "FITNESS & RECREATIONAL", "BEAUTY & PERSONAL CARE",
+  "ENTERTAINMENT", "HEALTH & WELLNESS", "EDUCATION & TUTORING",
+  "HOME SERVICES", "RETAIL", "TECHNOLOGY SERVICES", "OTHER",
+  // legacy seeds
+  "Coffee", "Food", "Books", "Fitness", "Beauty", "Retail",
+];
+
 export default function UserDashboard() {
   const navigate = useNavigate();
   const { user, authHeaders } = useAuth();
@@ -140,6 +148,7 @@ export default function UserDashboard() {
   const [userCards, setUserCards] = useState<UserPunchCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([Businesses.list(), UserCards.list(authHeaders())]).then(([biz, cards]) => {
@@ -152,7 +161,17 @@ export default function UserDashboard() {
   const myCards = userCards.filter(c => !c.is_completed);
   const firstCard = myCards[0] ?? null;
   const restCards = myCards.slice(1, 3);
-  const filtered = businesses.filter(b => !search || b.name.toLowerCase().includes(search.toLowerCase()));
+
+  // Derive categories that actually exist in the loaded businesses list
+  const presentCategories = ALL_CATEGORIES.filter(cat =>
+    businesses.some(b => b.category === cat)
+  );
+
+  const filtered = businesses.filter(b => {
+    const matchesSearch = !search || b.name.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = !activeCategory || b.category === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <UserLayout>
@@ -167,6 +186,43 @@ export default function UserDashboard() {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Punchcard..." style={{ border: "none", background: "transparent", outline: "none", fontFamily: MONO, fontSize: 11, color: "#0D0D0D", flex: 1 }} />
           </div>
         </div>
+
+        {/* Category filter pills */}
+        {presentCategories.length > 0 && (
+          <div style={{ background: "#fff", borderBottom: "1px solid #F0F0F0", paddingLeft: 14, paddingRight: 14, paddingTop: 8, paddingBottom: 10 }}>
+            <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
+              <button
+                onClick={() => setActiveCategory(null)}
+                style={{
+                  flexShrink: 0, padding: "5px 13px", borderRadius: 999,
+                  border: "1.5px solid " + (activeCategory === null ? "#0D0D0D" : "#E0E0E0"),
+                  background: activeCategory === null ? "#0D0D0D" : "transparent",
+                  color: activeCategory === null ? "#fff" : "#6B7280",
+                  fontFamily: MONO, fontSize: 8, fontWeight: 700,
+                  letterSpacing: "0.06em", cursor: "pointer", whiteSpace: "nowrap",
+                }}
+              >
+                ALL
+              </button>
+              {presentCategories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                  style={{
+                    flexShrink: 0, padding: "5px 13px", borderRadius: 999,
+                    border: "1.5px solid " + (activeCategory === cat ? "#0D0D0D" : "#E0E0E0"),
+                    background: activeCategory === cat ? "#0D0D0D" : "transparent",
+                    color: activeCategory === cat ? "#fff" : "#6B7280",
+                    fontFamily: MONO, fontSize: 8, fontWeight: 700,
+                    letterSpacing: "0.06em", cursor: "pointer", whiteSpace: "nowrap",
+                  }}
+                >
+                  {CAT_EMOJI[cat] ?? ""} {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* HI [NAME]! */}
         <div style={{ background: "#fff", padding: "14px 16px 16px", borderBottom: "1px solid #F0F0F0" }}>

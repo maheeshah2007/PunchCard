@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Businesses } from "../api";
@@ -66,16 +66,26 @@ const CATEGORIES: [string, string][] = [
 export default function BusinessSetup() {
   const navigate = useNavigate();
   const { authHeaders, user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep]               = useState(1);
   const [name, setName]               = useState("");
   const [phone, setPhone]             = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory]       = useState("");
+  const [logoImage, setLogoImage]     = useState<string | null>(null);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState("");
 
   const firstName = user?.name?.split(" ")[0]?.toUpperCase() ?? "USER";
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setLogoImage(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }
 
   async function submitStep2() {
     setLoading(true);
@@ -89,6 +99,7 @@ export default function BusinessSetup() {
           address: "",
           logo_color: "#1A1A1A",
           cover_color: "#E0E0E0",
+          logo_image: logoImage ?? undefined,
         },
         authHeaders(),
       );
@@ -122,22 +133,51 @@ export default function BusinessSetup() {
               THIS IS HOW YOUR BUSINESS WILL APPEAR IN X.
             </div>
 
-            {/* Avatar row */}
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+
+            {/* Avatar row — clickable to upload */}
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 32 }}>
-              {/* Gray circle avatar */}
-              <div style={{
-                width: 56, height: 56, borderRadius: "50%",
-                background: "#ABABAB", flexShrink: 0,
-              }} />
-              {/* Image icon + upload text */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {/* Circle avatar — shows preview or placeholder */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  width: 56, height: 56, borderRadius: "50%",
+                  background: logoImage ? "transparent" : "#ABABAB",
+                  flexShrink: 0, cursor: "pointer", overflow: "hidden",
+                  border: logoImage ? "2px solid #6A6A6A" : "none",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                {logoImage ? (
+                  <img src={logoImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="logo preview" />
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6B6B6B" strokeWidth="1.8" strokeLinecap="round">
+                    <path d="M12 5v14M5 12h14"/>
+                  </svg>
+                )}
+              </div>
+              {/* Upload text */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="2" y="2" width="18" height="18" rx="3" stroke="#6B6B6B" strokeWidth="1.5" fill="none"/>
                   <circle cx="7.5" cy="7.5" r="2" stroke="#6B6B6B" strokeWidth="1.2" fill="none"/>
                   <path d="M2 15l5-5 4 4 3-3 6 6" stroke="#6B6B6B" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
                 </svg>
-                <span style={{ fontFamily: MONO, fontSize: 11, color: "#7A7A7A", letterSpacing: "0.06em" }}>Upload Image</span>
-              </div>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: "#7A7A7A", letterSpacing: "0.06em" }}>
+                  {logoImage ? "Change Image" : "Upload Image"}
+                </span>
+              </button>
             </div>
 
             {/* Underline inputs */}

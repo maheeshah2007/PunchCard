@@ -115,6 +115,18 @@ export default function BusinessLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
           </div>
+          {/* Switch to customer view */}
+          <button
+            onClick={() => navigate("/dashboard")}
+            style={{
+              width: "100%", padding: "8px 0", borderRadius: 8, marginBottom: 8,
+              border: "none",
+              background: "rgba(255,255,255,0.15)", color: "#fff",
+              fontSize: 12, cursor: "pointer", letterSpacing: "0.3px", fontWeight: 600,
+            }}
+          >
+            👤 Customer View
+          </button>
           <button
             onClick={logout}
             style={{
