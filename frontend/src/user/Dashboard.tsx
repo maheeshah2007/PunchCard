@@ -11,56 +11,65 @@ const CAT_EMOJI: Record<string, string> = {
   Beauty: "💇", Retail: "🛍️", Other: "🏪",
 };
 
-/* Punchcard matching Component 1.png */
+/* Punchcard matching Component 1.png — uses template's saved colors/icon */
 function PunchCard({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
   const { business, template, stamps_collected } = card;
   const total = template.total_stamps;
-  const icon = CAT_EMOJI[business.category] ?? business.name[0].toUpperCase();
-  // Show up to 9 stamps in the grid; if more, still cap grid at 9
-  const gridCount = Math.min(total, 9);
+  const cardBg = template.card_color ?? "#1A1A1A";
+  const stampFill = template.stamp_color ?? "#C8A090";
+  const stampIcon = template.stamp_icon ?? (CAT_EMOJI[business.category] ?? "◉");
+  const isRowLayout = template.style === "row";
+  const gridCount = isRowLayout ? Math.min(total, 10) : Math.min(total, 9);
+  const isLightCard = ["#ffffff", "#EAB308", "#F97316", "#fff"].includes(cardBg);
+  const cardText = isLightCard ? "#1A1A1A" : "#fff";
+  const isLightStamp = ["#ffffff", "#EAB308", "#F97316"].includes(stampFill);
+
   return (
-    <div onClick={onClick} style={{ background: "#F5F5F5", borderRadius: 18, padding: "16px 14px 12px", cursor: "pointer" }}>
-      <div style={{ display: "flex", gap: 12 }}>
-        {/* Left: logo + name + reward */}
-        <div style={{ width: 100, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#fff", border: "2px solid #1A1A1A", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 10 }}>
-            {icon}
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.25, marginBottom: 6 }}>{business.name}</div>
-          <div style={{ fontSize: 10, color: "#4B4B4B", lineHeight: 1.5, flex: 1 }}>{template.reward_description}</div>
+    <div onClick={onClick} style={{ background: cardBg, borderRadius: 18, padding: "16px 14px 12px", cursor: "pointer" }}>
+      {/* Header: name + icon badge */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 9, fontFamily: MONO, color: cardText, opacity: 0.6, marginBottom: 2, letterSpacing: "0.06em" }}>YOUR CARD</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: cardText, letterSpacing: "-0.3px" }}>{business.name}</div>
         </div>
-        {/* Right: stamp grid */}
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 7 }}>
-            {Array.from({ length: gridCount }).map((_, i) => {
-              const filled = i < stamps_collected;
-              const isLast = i === gridCount - 1;
-              return (
-                <div key={i} style={{
-                  aspectRatio: "1",
-                  borderRadius: "50%",
-                  background: filled ? "#C8A090" : "#fff",
-                  border: "2px solid #1A1A1A",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: filled ? 20 : (isLast ? 16 : 11),
-                  fontFamily: MONO,
-                  color: filled ? "#fff" : (isLast ? "rgba(26,26,26,0.2)" : "#1A1A1A"),
-                  fontWeight: 700,
-                  position: "relative",
-                }}>
-                  {filled ? icon : (isLast ? icon : (i + 1).toString().padStart(2, "0"))}
-                </div>
-              );
-            })}
-          </div>
+        <div style={{ width: 34, height: 34, borderRadius: "50%", border: `2px solid ${stampFill}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+          {stampIcon}
         </div>
       </div>
-      {/* Footer */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
-        <div style={{ fontSize: 8, fontFamily: MONO, color: "#1A1A1A", background: "#fff", padding: "4px 10px", borderRadius: 999, border: "1.5px solid #1A1A1A" }}>
-          {business.name.toUpperCase()}
+
+      {/* Stamps */}
+      {isRowLayout ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+          {Array.from({ length: gridCount }).map((_, i) => {
+            const filled = i < stamps_collected;
+            return (
+              <div key={i} style={{ width: 30, height: 30, borderRadius: "50%", background: filled ? stampFill : "transparent", border: `2px solid ${filled ? stampFill : `${cardText}33`}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: filled ? (isLightStamp ? "#1A1A1A" : "#fff") : `${cardText}55` }}>
+                {filled ? stampIcon : ""}
+              </div>
+            );
+          })}
         </div>
-        <div style={{ fontSize: 8, fontFamily: MONO, color: "#1A1A1A", background: "#fff", padding: "4px 10px", borderRadius: 999, border: "1.5px solid #1A1A1A", fontWeight: 700 }}>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 7, marginBottom: 14 }}>
+          {Array.from({ length: gridCount }).map((_, i) => {
+            const filled = i < stamps_collected;
+            const isLast = i === gridCount - 1;
+            return (
+              <div key={i} style={{ aspectRatio: "1", borderRadius: "50%", background: filled ? stampFill : "transparent", border: `2px solid ${filled ? stampFill : `${cardText}33`}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: filled ? 16 : (isLast ? 13 : 10), fontFamily: MONO, color: filled ? (isLightStamp ? "#1A1A1A" : "#fff") : (isLast ? `${cardText}25` : `${cardText}60`), fontWeight: 700 }}>
+                {filled ? stampIcon : (isLast ? stampIcon : (i + 1).toString().padStart(2, "0"))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Divider */}
+      <div style={{ height: 1, background: `${cardText}20`, marginBottom: 10 }} />
+
+      {/* Footer: reward + counter */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 11, fontFamily: MONO, color: cardText, opacity: 0.85, flex: 1, marginRight: 8 }}>{template.reward_description}</div>
+        <div style={{ fontSize: 8, fontFamily: MONO, color: cardText, background: `${cardText}18`, padding: "4px 10px", borderRadius: 999, fontWeight: 700, whiteSpace: "nowrap" }}>
           {stamps_collected.toString().padStart(2, "0")}/{total.toString().padStart(2, "0")}
         </div>
       </div>

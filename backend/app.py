@@ -73,6 +73,9 @@ class PunchCardTemplateDB(Base):
     total_stamps = Column(Integer, default=10)
     reward_description = Column(String, nullable=False)
     style = Column(String, default="classic")
+    card_color = Column(String, default="#1A1A1A")
+    stamp_color = Column(String, default="#C8A090")
+    stamp_icon = Column(String, default="⭕")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     business = relationship("BusinessDB", back_populates="templates")
@@ -272,6 +275,9 @@ class CreateTemplateRequest(BaseModel):
     total_stamps: int = 10
     reward_description: str
     style: str = "classic"
+    card_color: str = "#1A1A1A"
+    stamp_color: str = "#C8A090"
+    stamp_icon: str = "⭕"
 
 class GenerateCodeRequest(BaseModel):
     template_id: int
@@ -296,7 +302,7 @@ def require_business(user: UserDB, db: Session) -> BusinessDB:
     return biz
 
 def serialize_template(t: PunchCardTemplateDB) -> dict:
-    return {"id": t.id, "name": t.name, "total_stamps": t.total_stamps, "reward_description": t.reward_description, "style": t.style, "is_active": t.is_active}
+    return {"id": t.id, "name": t.name, "total_stamps": t.total_stamps, "reward_description": t.reward_description, "style": t.style, "is_active": t.is_active, "card_color": t.card_color or "#1A1A1A", "stamp_color": t.stamp_color or "#C8A090", "stamp_icon": t.stamp_icon or "⭕"}
 
 def serialize_business(b: BusinessDB, include_template: bool = True) -> dict:
     active_template = None
