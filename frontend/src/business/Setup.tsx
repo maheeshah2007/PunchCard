@@ -3,123 +3,252 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Businesses } from "../api";
 
-const CATEGORIES = ["Coffee", "Food", "Books", "Fitness", "Beauty", "Retail", "Other"];
+const PIXEL = "'Press Start 2P', monospace";
+const MONO  = "'Space Mono', monospace";
 
-const COLOR_PRESETS = [
-  { hex: "#6B48FF" }, { hex: "#3F3CA8" }, { hex: "#FF6B35" },
-  { hex: "#FF3535" }, { hex: "#00C896" }, { hex: "#FF9B3D" },
-  { hex: "#9B59B6" }, { hex: "#27AE60" }, { hex: "#3498DB" }, { hex: "#1A1A2E" },
+const BG_STYLE: React.CSSProperties = {
+  minHeight: "100vh",
+  background: "#2D2D2D",
+  backgroundImage: [
+    "radial-gradient(ellipse 65% 75% at 10% 50%, rgba(155,155,155,0.35) 0%, transparent 65%)",
+    "radial-gradient(ellipse 45% 55% at 90% 15%, rgba(110,110,110,0.25) 0%, transparent 65%)",
+  ].join(", "),
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 32,
+};
+
+const OUTER_PANEL: React.CSSProperties = {
+  background: "#CACACA",
+  borderRadius: 24,
+  padding: "48px 44px",
+  width: "100%",
+  maxWidth: 560,
+};
+
+const UNDERLINE_INPUT: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 0",
+  border: "none",
+  borderBottom: "1.5px solid #8A8A8A",
+  background: "transparent",
+  fontFamily: MONO,
+  fontSize: 13,
+  color: "#1A1A1A",
+  outline: "none",
+  boxSizing: "border-box",
+};
+
+const SUBMIT_BTN: React.CSSProperties = {
+  width: "100%",
+  padding: "18px",
+  borderRadius: 999,
+  border: "none",
+  background: "#1A1A1A",
+  color: "#fff",
+  fontFamily: MONO,
+  fontSize: 12,
+  fontWeight: 700,
+  letterSpacing: "0.12em",
+  cursor: "pointer",
+  marginTop: 32,
+};
+
+const CATEGORIES: [string, string][] = [
+  ["BEAUTY & PERSONAL CARE", "EDUCATION & TUTORING"],
+  ["ENTERTAINMENT",          "FITNESS & RECREATIONAL"],
+  ["FOOD & BEVERAGE",        "HEALTH & WELLNESS"],
+  ["HOME SERVICES",          "RETAIL"],
+  ["TECHNOLOGY SERVICES",    "OTHER"],
 ];
-
-const INPUT: React.CSSProperties = {
-  width: "100%", padding: "13px 16px", borderRadius: 12,
-  border: "1.5px solid #E5E7EB", fontSize: 15, outline: "none",
-  background: "#fff", color: "#1A1A2E",
-};
-const LABEL: React.CSSProperties = {
-  display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 7,
-};
+const FLAT_CATEGORIES = CATEGORIES.flat();
 
 export default function BusinessSetup() {
   const navigate = useNavigate();
-  const { authHeaders } = useAuth();
+  const { authHeaders, user } = useAuth();
+
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({
-    name: "", description: "", category: "Coffee",
-    address: "", logo_color: "#6B48FF", cover_color: "#EDE9FF",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [name, setName]           = useState("");
+  const [phone, setPhone]         = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory]   = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
 
-  const upd = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const firstName = user?.name?.split(" ")[0]?.toUpperCase() ?? "USER";
 
-  async function submit() {
-    setLoading(true); setError("");
+  async function submitStep2() {
+    setLoading(true);
+    setError("");
     try {
-      await Businesses.create(form, authHeaders());
+      await Businesses.create(
+        {
+          name,
+          description,
+          category,
+          address: "",
+          logo_color: "#1A1A1A",
+          cover_color: "#E0E0E0",
+        },
+        authHeaders(),
+      );
       navigate("/business/punchcard/create");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #1E1C5E 0%, #3F3CA8 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: "#fff", borderRadius: 24, padding: "40px 40px 36px", width: "100%", maxWidth: 540, boxShadow: "0 24px 64px rgba(0,0,0,0.2)" }}>
-
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg, #3F3CA8, #252178)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 22, fontWeight: 800 }}>N</div>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: "#1A1A2E" }}>Set up your business</h1>
-            <p style={{ fontSize: 13, color: "#9CA3AF" }}>Step {step} of 2</p>
-          </div>
-        </div>
-
-        {/* Progress */}
-        <div style={{ height: 4, background: "#F0F0F0", borderRadius: 999, marginBottom: 28, overflow: "hidden" }}>
-          <div style={{ height: "100%", background: "linear-gradient(90deg, #3F3CA8, #6B48FF)", width: step === 1 ? "50%" : "100%", transition: "width 0.4s", borderRadius: 999 }} />
-        </div>
-
+    <div style={BG_STYLE}>
+      <div style={OUTER_PANEL}>
+        {/* ── STEP 1 ── */}
         {step === 1 && (
           <div>
-            <div style={{ marginBottom: 18 }}>
-              <label style={LABEL}>Business Name *</label>
-              <input value={form.name} onChange={e => upd("name", e.target.value)} placeholder="e.g. Brew & Bloom Coffee" style={INPUT} required />
+            {/* Heading */}
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontFamily: PIXEL, fontSize: 18, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.6 }}>
+                HI {firstName}!
+              </div>
+              <div style={{ fontFamily: PIXEL, fontSize: 18, fontWeight: 700, color: "#1A1A1A", lineHeight: 1.6 }}>
+                PLEASE CREATE YOUR COMPANY PROFILE!
+              </div>
             </div>
-            <div style={{ marginBottom: 18 }}>
-              <label style={LABEL}>Category *</label>
-              <select value={form.category} onChange={e => upd("category", e.target.value)} style={{ ...INPUT, background: "#fff" }}>
-                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-              </select>
+
+            {/* Subtitle */}
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "#4B4B4B", marginBottom: 32 }}>
+              THIS IS HOW YOUR BUSINESS WILL APPEAR IN X.
             </div>
-            <div style={{ marginBottom: 18 }}>
-              <label style={LABEL}>Description</label>
-              <textarea value={form.description} onChange={e => upd("description", e.target.value)} placeholder="What makes your business special?" rows={3} style={{ ...INPUT, resize: "vertical", lineHeight: 1.5 }} />
+
+            {/* Avatar row */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 32 }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: "50%",
+                background: "#ABABAB", flexShrink: 0,
+              }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {/* Picture-frame icon */}
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="2" width="18" height="18" rx="3" stroke="#6B6B6B" strokeWidth="1.5" fill="none"/>
+                  <circle cx="7.5" cy="7.5" r="2" stroke="#6B6B6B" strokeWidth="1.2" fill="none"/>
+                  <path d="M2 15l5-5 4 4 3-3 6 6" stroke="#6B6B6B" strokeWidth="1.2" fill="none" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: "#7A7A7A", letterSpacing: "0.06em" }}>Upload Image</span>
+              </div>
             </div>
-            <div style={{ marginBottom: 28 }}>
-              <label style={LABEL}>Address</label>
-              <input value={form.address} onChange={e => upd("address", e.target.value)} placeholder="123 Main St, Pittsburgh, PA" style={INPUT} />
+
+            {/* Underline inputs */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+              <input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="BUSINESS NAME"
+                style={{ ...UNDERLINE_INPUT, "::placeholder": { color: "#9A9A9A" } } as React.CSSProperties}
+              />
+              <input
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="PHONE NUMBER"
+                style={UNDERLINE_INPUT}
+              />
+              <input
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="PLEASE ENTER A BRIEF DESCRIPTION ABOUT YOUR BUSINESS!"
+                style={UNDERLINE_INPUT}
+              />
             </div>
-            <button onClick={() => { if (form.name.trim()) setStep(2); }} disabled={!form.name.trim()} style={{ width: "100%", padding: "15px", borderRadius: 13, border: "none", background: form.name.trim() ? "linear-gradient(180deg, #3F3CA8 0%, #252178 100%)" : "#E5E7EB", color: form.name.trim() ? "#fff" : "#9CA3AF", fontSize: 15, fontWeight: 700, cursor: form.name.trim() ? "pointer" : "not-allowed" }}>
-              Continue →
+
+            <button
+              onClick={() => { if (name.trim()) setStep(2); }}
+              disabled={!name.trim()}
+              style={{ ...SUBMIT_BTN, background: name.trim() ? "#1A1A1A" : "#9A9A9A", cursor: name.trim() ? "pointer" : "not-allowed" }}
+            >
+              SUBMIT
             </button>
           </div>
         )}
 
+        {/* ── STEP 2 ── */}
         {step === 2 && (
           <div>
-            {/* Preview */}
-            <div style={{ height: 96, borderRadius: 16, background: `linear-gradient(135deg, ${form.logo_color}, ${form.logo_color}BB)`, display: "flex", alignItems: "center", padding: "0 24px", marginBottom: 24 }}>
-              <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 24, fontWeight: 800 }}>
-                {form.name[0] ?? "B"}
-              </div>
-              <div style={{ marginLeft: 16 }}>
-                <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>{form.name}</div>
-                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{form.category}</div>
-              </div>
+            {/* Heading */}
+            <div style={{ fontFamily: PIXEL, fontSize: 16, fontWeight: 700, color: "#1A1A1A", textAlign: "center", lineHeight: 1.8, marginBottom: 10 }}>
+              SELECT THE CATEGORY THAT BEST DESCRIBES YOUR BUSINESS:
             </div>
 
-            <div style={{ marginBottom: 28 }}>
-              <label style={LABEL}>Brand Color</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                {COLOR_PRESETS.map(c => (
-                  <button key={c.hex} type="button" onClick={() => upd("logo_color", c.hex)} style={{ width: 38, height: 38, borderRadius: "50%", background: c.hex, border: "none", cursor: "pointer", boxShadow: form.logo_color === c.hex ? `0 0 0 3px #fff, 0 0 0 5px ${c.hex}` : "none", transition: "box-shadow 0.15s" }} />
-                ))}
+            {/* Subtitle */}
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: "0.08em", color: "#4B4B4B", textAlign: "center", marginBottom: 28 }}>
+              THIS HELPS CUSTOMERS DISCOVER YOUR BUSINESS.
+            </div>
+
+            {/* Inner dark panel with grid */}
+            <div style={{ background: "#9A9A9A", borderRadius: 14, padding: "20px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+              {CATEGORIES.map(([left, right]) => (
+                <div key={left} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {[left, right].map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategory(cat)}
+                      style={{
+                        background: "#B0B0B0",
+                        borderRadius: 8,
+                        padding: "13px 16px",
+                        border: "none",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        textAlign: "left",
+                      }}
+                    >
+                      {/* Checkbox visual */}
+                      <div style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: 3,
+                        border: "1.5px solid #5A5A5A",
+                        background: category === cat ? "#1A1A1A" : "transparent",
+                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}>
+                        {category === cat && (
+                          <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+                            <path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: "#1A1A1A", letterSpacing: "0.04em" }}>
+                        {cat}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {error && (
+              <div style={{ background: "#FEE2E2", borderRadius: 8, padding: "10px 14px", color: "#DC2626", fontFamily: MONO, fontSize: 11, marginTop: 16 }}>
+                {error}
               </div>
-            </div>
+            )}
 
-            {error && <div style={{ background: "#FEF2F2", borderRadius: 10, padding: "12px 16px", marginBottom: 16, color: "#DC2626", fontSize: 14 }}>{error}</div>}
-
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setStep(1)} style={{ flex: 1, padding: "15px", borderRadius: 13, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
-                ← Back
-              </button>
-              <button onClick={submit} disabled={loading} style={{ flex: 2, padding: "15px", borderRadius: 13, border: "none", background: loading ? "#D1D5DB" : "linear-gradient(180deg, #3F3CA8 0%, #252178 100%)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer" }}>
-                {loading ? "Creating..." : "Create Business →"}
-              </button>
-            </div>
-            <p style={{ textAlign: "center", fontSize: 12, color: "#9CA3AF", marginTop: 12 }}>Next: design your loyalty punchcard</p>
+            <button
+              onClick={submitStep2}
+              disabled={!category || loading}
+              style={{
+                ...SUBMIT_BTN,
+                background: category && !loading ? "#1A1A1A" : "#9A9A9A",
+                cursor: category && !loading ? "pointer" : "not-allowed",
+              }}
+            >
+              {loading ? "CREATING..." : "SUBMIT"}
+            </button>
           </div>
         )}
       </div>
