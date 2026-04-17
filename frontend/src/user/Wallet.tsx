@@ -4,115 +4,86 @@ import { useAuth } from "../context/AuthContext";
 import { UserCards, UserPunchCard } from "../api";
 import UserLayout from "./Layout";
 
-const MONO = "'Space Mono', monospace";
+const BG = "#0E0E0E";
+const TEXT = "#F9F9F9";
+const TEXT2 = "#B7B7B7";
+const MONO = "'DM Mono', 'Space Mono', monospace";
 
 const CAT_EMOJI: Record<string, string> = {
-  classic: "◉", star: "★", heart: "♥", coffee: "✿",
+  Coffee: "☕", Food: "🍕", Books: "📚", Fitness: "💪",
+  Beauty: "💇", Retail: "🛍️", Other: "🏪",
+  "BEAUTY & PERSONAL CARE": "💇", "EDUCATION & TUTORING": "📚",
+  "ENTERTAINMENT": "🎵", "FITNESS & RECREATIONAL": "💪",
+  "FOOD & BEVERAGE": "🍕", "HEALTH & WELLNESS": "🌿",
+  "HOME SERVICES": "🏠", "TECHNOLOGY SERVICES": "💻", "OTHER": "🏪",
 };
 
-function PunchDots({ collected, total, style }: { collected: number; total: number; style: string }) {
-  const icon = CAT_EMOJI[style] ?? "◉";
-  // Show up to 9 dots max in the row
-  const display = Math.min(total, 9);
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 5, maxWidth: 180 }}>
-      {Array.from({ length: display }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: "50%",
-            border: i < collected ? "none" : "1.5px solid #CACACA",
-            background: i < collected ? "#0D0D0D" : "transparent",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 11,
-            color: "#fff",
-          }}
-        >
-          {i < collected ? icon : ""}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function WalletRow({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
+function WalletCard({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
   const { business, template, stamps_collected, is_completed } = card;
+  const total = template.total_stamps;
+  const cardBg = template.card_color ?? "#1A1A1A";
+  const stampFill = template.stamp_color ?? "#C8A090";
+  const stampIcon = template.stamp_icon ?? (CAT_EMOJI[business.category] ?? "◉");
+  const isLight = ["#ffffff", "#EAB308", "#F97316", "#fff"].includes(cardBg.toLowerCase());
+  const ct = isLight ? "#1A1A1A" : TEXT;
+  const isLightStamp = ["#ffffff", "#EAB308", "#F97316"].includes(stampFill);
+
   return (
     <div
       onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "16px 0",
-        borderBottom: "1px solid #F0F0F0",
-        cursor: "pointer",
-        gap: 12,
-      }}
+      style={{ background: cardBg, borderRadius: 20, padding: "18px 16px 14px", cursor: "pointer", marginBottom: 14 }}
     >
-      {/* Left: logo + name */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            background: "#F0F0F0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 18,
-            flexShrink: 0,
-            fontFamily: MONO,
-          }}
-        >
-          {business.name[0].toUpperCase()}
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: "#0D0D0D",
-              fontFamily: MONO,
-              letterSpacing: "-0.3px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              maxWidth: 110,
-            }}
-          >
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 8, fontFamily: MONO, color: ct, opacity: 0.55, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>
+            {is_completed ? "EARNED" : "YOUR CARD"}
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, fontFamily: MONO, color: ct, letterSpacing: "-0.3px" }}>
             {business.name}
           </div>
-          {is_completed && (
-            <div
-              style={{
-                marginTop: 3,
-                display: "inline-block",
-                background: "#0D0D0D",
-                color: "#fff",
-                fontSize: 9,
-                fontFamily: MONO,
-                letterSpacing: "0.08em",
-                padding: "2px 7px",
-                borderRadius: 999,
-              }}
-            >
-              EARNED
-            </div>
-          )}
+        </div>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", border: `2px solid ${stampFill}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+          {stampIcon}
         </div>
       </div>
 
-      {/* Right: punch dots + count */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-        <PunchDots collected={stamps_collected} total={template.total_stamps} style={template.style} />
-        <div style={{ fontSize: 11, color: "#9CA3AF", fontFamily: MONO, minWidth: 32, textAlign: "right" }}>
-          {stamps_collected}/{template.total_stamps}
+      {/* Stamp grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 14 }}>
+        {Array.from({ length: Math.min(total, 9) }).map((_, i) => {
+          const filled = i < stamps_collected;
+          const isLast = i === Math.min(total, 9) - 1;
+          return (
+            <div
+              key={i}
+              style={{
+                aspectRatio: "1",
+                borderRadius: "50%",
+                background: filled ? stampFill : "transparent",
+                border: `2px solid ${filled ? stampFill : `${ct}30`}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: filled ? 22 : (isLast ? 14 : 9),
+                fontFamily: MONO,
+                color: filled ? (isLightStamp ? "#1A1A1A" : TEXT) : (isLast ? `${ct}25` : `${ct}55`),
+                fontWeight: 700,
+              }}
+            >
+              {filled ? stampIcon : (isLast ? stampIcon : (i + 1).toString().padStart(2, "0"))}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div style={{ height: 1, background: `${ct}20`, marginBottom: 10 }} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 10, fontFamily: MONO, color: ct, opacity: 0.8, flex: 1, marginRight: 8 }}>
+          {template.reward_description}
+        </div>
+        <div style={{ fontSize: 8, fontFamily: MONO, color: ct, background: `${ct}18`, padding: "4px 10px", borderRadius: 999, fontWeight: 700, whiteSpace: "nowrap" }}>
+          {stamps_collected.toString().padStart(2, "0")}/{total.toString().padStart(2, "0")}
         </div>
       </div>
     </div>
@@ -126,9 +97,10 @@ export default function UserWallet() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    UserCards.list(authHeaders()).then(data => {
-      setCards(data);
-    }).catch(console.error).finally(() => setLoading(false));
+    UserCards.list(authHeaders())
+      .then(setCards)
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   const active = cards.filter(c => !c.is_completed);
@@ -136,67 +108,57 @@ export default function UserWallet() {
 
   return (
     <UserLayout>
-      <div style={{ minHeight: "100vh", background: "#fff" }}>
+      <div style={{ minHeight: "100vh", background: BG, paddingTop: 56 }}>
         {/* Header */}
-        <div style={{ padding: "56px 24px 16px" }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#0D0D0D", fontFamily: MONO, letterSpacing: "-0.5px" }}>
-            WALLET
+        <div style={{ padding: "20px 20px 24px" }}>
+          <div style={{ fontSize: 44, fontFamily: MONO, fontWeight: 500, color: TEXT, letterSpacing: "-1px", lineHeight: 1.1, textTransform: "lowercase", marginBottom: 6 }}>
+            wallet
           </div>
-          <div style={{ fontSize: 11, color: "#9CA3AF", fontFamily: MONO, marginTop: 4, letterSpacing: "0.06em" }}>
-            {cards.length} ACTIVE PUNCHCARD{cards.length !== 1 ? "S" : ""}
+          <div style={{ fontSize: 13, fontFamily: MONO, color: TEXT2, letterSpacing: "0.02em" }}>
+            {cards.length} active punchcard{cards.length !== 1 ? "s." : "."}
           </div>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#9CA3AF", fontFamily: MONO, fontSize: 12 }}>
+          <div style={{ textAlign: "center", padding: 60, fontFamily: MONO, fontSize: 11, color: TEXT2 }}>
             LOADING...
           </div>
         ) : cards.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 24px", fontFamily: MONO }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>◉</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#0D0D0D", marginBottom: 8, letterSpacing: "0.05em" }}>
-              NO PUNCHCARDS YET
+            <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 8, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              No punchcards yet
             </div>
-            <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 24, letterSpacing: "0.04em" }}>
-              VISIT A LOCAL BUSINESS TO GET STARTED
+            <div style={{ fontSize: 11, color: TEXT2, marginBottom: 24, letterSpacing: "0.04em" }}>
+              Visit a local business to get started
             </div>
             <button
-              onClick={() => navigate("/dashboard")}
-              style={{ padding: "14px 28px", borderRadius: 999, border: "none", background: "#0D0D0D", color: "#fff", fontSize: 12, fontFamily: MONO, letterSpacing: "0.1em", cursor: "pointer" }}
+              onClick={() => navigate("/browse")}
+              style={{ padding: "14px 28px", borderRadius: 999, border: "none", background: TEXT, color: BG, fontSize: 11, fontFamily: MONO, letterSpacing: "0.1em", cursor: "pointer", textTransform: "uppercase" }}
             >
-              EXPLORE →
+              Browse →
             </button>
           </div>
         ) : (
-          <div style={{ padding: "0 24px 100px" }}>
-            {/* Active */}
+          <div style={{ padding: "0 20px 100px" }}>
             {active.length > 0 && (
               <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: 10, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.1em", marginBottom: 4, paddingTop: 8 }}>
-                  ACTIVE
+                <div style={{ fontSize: 10, fontFamily: MONO, color: TEXT2, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14, paddingTop: 4 }}>
+                  Active
                 </div>
                 {active.map(card => (
-                  <WalletRow
-                    key={card.id}
-                    card={card}
-                    onClick={() => navigate(`/businesses/${card.business.id}`)}
-                  />
+                  <WalletCard key={card.id} card={card} onClick={() => navigate(`/businesses/${card.business.id}`)} />
                 ))}
               </div>
             )}
 
-            {/* Completed */}
             {completed.length > 0 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontSize: 10, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.1em", marginBottom: 4 }}>
-                  EARNED
+                <div style={{ fontSize: 10, fontFamily: MONO, color: TEXT2, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14 }}>
+                  Earned
                 </div>
                 {completed.map(card => (
-                  <WalletRow
-                    key={card.id}
-                    card={card}
-                    onClick={() => navigate(`/businesses/${card.business.id}`)}
-                  />
+                  <WalletCard key={card.id} card={card} onClick={() => navigate(`/businesses/${card.business.id}`)} />
                 ))}
               </div>
             )}

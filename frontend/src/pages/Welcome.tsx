@@ -1,17 +1,83 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
+import walletImg from "../assets/wallet-and-cards.png";
+
+const BG = "#0E0E0E";
+const MONO = "'DM Mono', 'Space Mono', monospace";
+const PLEX = "'IBM Plex Mono', 'Space Mono', monospace";
 
 export default function Welcome() {
   const navigate = useNavigate();
   return (
-    <div style={{ minHeight: "100vh", background: "#f3f4ff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-      <img src="/assets/group58.svg" alt="Welcome" style={{ width: 360, maxWidth: "90vw", height: "auto", marginBottom: 40 }} />
-      <button style={{ width: 220, height: 52, borderRadius: 999, border: "none", background: "linear-gradient(180deg, #3f3ca8 0%, #252178 100%)", color: "white", fontSize: 16, cursor: "pointer", marginBottom: 16 }} onClick={() => navigate("/register")}>
-        Get started
-      </button>
-      <button style={{ width: 240, height: 52, borderRadius: 999, background: "transparent", border: "2px solid rgba(52,44,140,0.6)", color: "rgba(52,44,140,1)", fontSize: 16, cursor: "pointer" }} onClick={() => navigate("/login")}>
-        I have an account
-      </button>
+    <div
+      style={{
+        minHeight: "100vh",
+        maxWidth: 430,
+        margin: "0 auto",
+        background: BG,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "60px 28px 48px",
+        boxSizing: "border-box",
+      }}
+    >
+      {/* Logo + illustration */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, justifyContent: "center" }}>
+        <div style={{ fontSize: 44, fontFamily: MONO, fontWeight: 500, color: "#F9F9F9", letterSpacing: "-1px", lineHeight: 1.1, textTransform: "uppercase", marginBottom: 8 }}>
+          PUNCHCARD
+        </div>
+        <div style={{ fontSize: 13, fontFamily: MONO, color: "#B7B7B7", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 40 }}>
+          Shop Small. Punch Big.
+        </div>
+        <img
+          src={walletImg}
+          alt="Loyalty cards"
+          style={{ width: "85%", maxWidth: 320, height: "auto" }}
+        />
+      </div>
+
+      {/* CTA buttons */}
+      <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+        <button
+          onClick={() => navigate("/register")}
+          style={{
+            width: "100%",
+            padding: "18px",
+            borderRadius: 15,
+            border: "none",
+            background: "#F9F9F9",
+            color: BG,
+            fontFamily: PLEX,
+            fontSize: 15,
+            fontWeight: 500,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+          }}
+        >
+          Get Started
+        </button>
+        <button
+          onClick={() => navigate("/login")}
+          style={{
+            width: "100%",
+            padding: "18px",
+            borderRadius: 15,
+            border: "1px solid rgba(249,249,249,0.3)",
+            background: "transparent",
+            color: "#F9F9F9",
+            fontFamily: PLEX,
+            fontSize: 15,
+            fontWeight: 500,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+          }}
+        >
+          I Have an Account
+        </button>
+      </div>
     </div>
   );
 }

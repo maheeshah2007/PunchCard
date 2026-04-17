@@ -1,38 +1,53 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
+const BG = "#0E0E0E";
+const MONO = "'DM Mono', 'Space Mono', monospace";
+
 const TABS = [
-  { label: "Home",   path: "/dashboard",   icon: HomeIcon },
-  { label: "Wallet", path: "/wallet",       icon: WalletIcon },
-  { label: "Scan",   path: "/authenticate", icon: ScanIcon },
+  { label: "Home",    path: "/dashboard",   icon: HomeIcon },
+  { label: "Browse",  path: "/browse",      icon: BrowseIcon },
+  { label: "Wallet",  path: "/wallet",      icon: WalletIcon },
+  { label: "Profile", path: "/profile",     icon: ProfileIcon },
 ];
 
 function HomeIcon({ active }: { active: boolean }) {
+  const c = active ? BG : "#9CA3AF";
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#3F3CA8" : "#9CA3AF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
-      <path d="M9 21V12h6v9"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" fill={active ? c : "none"} />
+      <path d="M9 21V12h6v9" stroke={active ? "#fff" : c} />
+    </svg>
+  );
+}
+
+function BrowseIcon({ active }: { active: boolean }) {
+  const c = active ? BG : "#9CA3AF";
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <path d="M21 21l-4.35-4.35" />
     </svg>
   );
 }
 
 function WalletIcon({ active }: { active: boolean }) {
+  const c = active ? BG : "#9CA3AF";
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#3F3CA8" : "#9CA3AF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="4" width="22" height="16" rx="2"/>
-      <path d="M1 10h22"/>
-      <circle cx="17" cy="15" r="1.5" fill={active ? "#3F3CA8" : "#9CA3AF"} stroke="none"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+      <circle cx="17" cy="15" r="1.5" fill={active ? BG : "#9CA3AF"} stroke="none" />
     </svg>
   );
 }
 
-function ScanIcon({ active }: { active: boolean }) {
+function ProfileIcon({ active }: { active: boolean }) {
+  const c = active ? BG : "#9CA3AF";
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#3F3CA8" : "#9CA3AF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" rx="1"/>
-      <rect x="14" y="3" width="7" height="7" rx="1"/>
-      <rect x="3" y="14" width="7" height="7" rx="1"/>
-      <path d="M14 14h2v2h-2zM18 14h3M14 18v3M18 18h3v3h-3z"/>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
     </svg>
   );
 }
@@ -47,19 +62,17 @@ export default function UserLayout({ children }: { children: ReactNode }) {
         maxWidth: 430,
         margin: "0 auto",
         minHeight: "100vh",
-        background: "#fff",
+        background: BG,
         display: "flex",
         flexDirection: "column",
         position: "relative",
-        boxShadow: "0 0 40px rgba(0,0,0,0.08)",
+        boxShadow: "0 0 60px rgba(0,0,0,0.5)",
       }}
     >
-      {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: "auto", paddingBottom: 76 }}>
+      <div style={{ flex: 1, overflowY: "auto", paddingBottom: 82 }}>
         {children}
       </div>
 
-      {/* Bottom nav */}
       <nav
         style={{
           position: "fixed",
@@ -68,8 +81,10 @@ export default function UserLayout({ children }: { children: ReactNode }) {
           transform: "translateX(-50%)",
           width: "100%",
           maxWidth: 430,
-          background: "#fff",
-          borderTop: "1px solid #F0F0F0",
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderTop: "1px solid rgba(0,0,0,0.08)",
           display: "flex",
           zIndex: 200,
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
@@ -99,8 +114,9 @@ export default function UserLayout({ children }: { children: ReactNode }) {
                 style={{
                   fontSize: 10,
                   fontWeight: active ? 700 : 400,
-                  color: active ? "#3F3CA8" : "#9CA3AF",
-                  letterSpacing: "0.3px",
+                  color: active ? BG : "#9CA3AF",
+                  fontFamily: MONO,
+                  letterSpacing: "0.02em",
                 }}
               >
                 {tab.label}

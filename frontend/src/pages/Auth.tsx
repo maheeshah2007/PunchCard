@@ -10,6 +10,9 @@ declare global {
 }
 
 const GOOGLE_CLIENT_ID = "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com";
+const BG = "#0E0E0E";
+const MONO = "'DM Mono', 'Space Mono', monospace";
+const PLEX = "'IBM Plex Mono', 'Space Mono', monospace";
 
 export default function Auth({ mode }: { mode: "login" | "register" }) {
   const navigate = useNavigate();
@@ -33,28 +36,70 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
           } catch (e) { setError(e instanceof Error ? e.message : "Google login failed"); }
         },
       });
-      window.google.accounts.id.renderButton(googleBtnRef.current, { theme: "outline", size: "large", width: 320, text: "continue_with" });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: "outline", size: "large", width: 320, text: mode === "register" ? "signup_with" : "continue_with",
+      });
       return true;
     };
     if (!init()) {
       const interval = setInterval(() => { if (init()) clearInterval(interval); }, 200);
       return () => clearInterval(interval);
     }
-  }, [navigate, setUser]);
+  }, [navigate, setUser, mode]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #3F3CA8 0%, #252178 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ background: "#fff", borderRadius: 24, padding: "40px 32px", width: "100%", maxWidth: 380, textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
-        <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #3F3CA8, #252178)", color: "#fff", fontSize: 28, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>N</div>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#1A1A2E", margin: "0 0 8px" }}>NeighborGood</h1>
-        <p style={{ fontSize: 15, color: "#6B7280", margin: 0 }}>{mode === "register" ? "Create your account" : "Welcome back"}</p>
-        <div style={{ marginTop: 24 }}>
-          <div ref={googleBtnRef} />
-          {error && <p style={{ color: "#EF4444", marginTop: 12, fontSize: 14 }}>{error}</p>}
+    <div
+      style={{
+        minHeight: "100vh",
+        maxWidth: 430,
+        margin: "0 auto",
+        background: BG,
+        display: "flex",
+        flexDirection: "column",
+        padding: "60px 28px 48px",
+        boxSizing: "border-box",
+      }}
+    >
+      {/* Back */}
+      <button
+        onClick={() => navigate(-1)}
+        style={{ background: "none", border: "none", color: "#B7B7B7", fontFamily: MONO, fontSize: 13, cursor: "pointer", padding: 0, textAlign: "left", marginBottom: 40 }}
+      >
+        ← back
+      </button>
+
+      {/* Heading */}
+      <div style={{ fontSize: 44, fontFamily: MONO, fontWeight: 500, color: "#F9F9F9", letterSpacing: "-1px", lineHeight: 1.1, textTransform: "uppercase", marginBottom: 8 }}>
+        {mode === "login" ? "Login" : "Sign Up"}
+      </div>
+      <div style={{ fontSize: 13, fontFamily: MONO, color: "#B7B7B7", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 48 }}>
+        {mode === "login" ? "Welcome back." : "Create your account."}
+      </div>
+
+      {/* Google sign-in */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+        <div style={{ fontSize: 12, fontFamily: MONO, color: "#727272", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>
+          {mode === "login" ? "log in with" : "sign up with"}
         </div>
-        <p style={{ marginTop: 24, fontSize: 14, color: "#6B7280" }}>
-          {mode === "register" ? <>Already have an account? <a href="/login" style={{ color: "#3F3CA8", fontWeight: 600, textDecoration: "none" }}>Log in</a></> : <>New here? <a href="/register" style={{ color: "#3F3CA8", fontWeight: 600, textDecoration: "none" }}>Sign up</a></>}
-        </p>
+        <div ref={googleBtnRef} style={{ width: "100%", display: "flex", justifyContent: "center" }} />
+        {error && <p style={{ color: "#EF4444", fontSize: 13, fontFamily: MONO, textAlign: "center" }}>{error}</p>}
+      </div>
+
+      {/* Switch mode */}
+      <div style={{ marginTop: "auto", textAlign: "center", fontFamily: PLEX, fontSize: 13, color: "#727272" }}>
+        {mode === "login" ? (
+          <>Don't have an account?{" "}
+            <span onClick={() => navigate("/register")} style={{ color: "#F9F9F9", cursor: "pointer", textDecoration: "underline" }}>
+              Sign up
+            </span>
+          </>
+        ) : (
+          <>Already have an account?{" "}
+            <span onClick={() => navigate("/login")} style={{ color: "#F9F9F9", cursor: "pointer", textDecoration: "underline" }}>
+              Log in
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

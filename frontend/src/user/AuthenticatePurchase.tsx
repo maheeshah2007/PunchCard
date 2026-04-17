@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { AuthCodes, Businesses, Business, UserPunchCard, UserCards } from "../api";
 import UserLayout from "./Layout";
 
-const MONO = "'Space Mono', monospace";
+const MONO = "'DM Mono', 'Space Mono', monospace";
 
 const CAT_EMOJI: Record<string, string> = {
   Coffee: "☕", Food: "🍕", Books: "📚", Fitness: "💪",
