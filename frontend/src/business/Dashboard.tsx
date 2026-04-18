@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Businesses, BusinessStats, Business, Dev } from "../api";
 import BusinessLayout from "./Layout";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
-const STATS = [
-  { key: "unique_customers",  label: "Total Customers",  color: "#6B48FF", bg: "#F0EEFF", icon: "👥" },
-  { key: "total_stamps_given", label: "Stamps Given",    color: "#FF9B3D", bg: "#FFF7ED", icon: "🏷️" },
-  { key: "completed_cards",  label: "Completed Cards",   color: "#00C896", bg: "#E6FFF9", icon: "✅" },
-  { key: "total_transactions", label: "Transactions",    color: "#FF6B35", bg: "#FFF2EC", icon: "🔄" },
-];
+interface StatCard {
+  label: string;
+  value: string | number;
+  change: string;
+  positive: boolean;
+}
 
 export default function BusinessDashboard() {
   const navigate = useNavigate();
@@ -37,100 +38,116 @@ export default function BusinessDashboard() {
     );
   }
 
+  const engagementRate = stats && stats.unique_customers > 0
+    ? Math.round((stats.completed_cards / stats.unique_customers) * 100)
+    : 0;
+
+  const statCards: StatCard[] = [
+    { label: "Follower Count",    value: stats?.unique_customers ?? 0,    change: "+10%",   positive: true },
+    { label: "Rewards Collected", value: stats?.completed_cards ?? 0,     change: "+13.1%", positive: true },
+    { label: "Stamps Issued",     value: stats?.total_stamps_given ?? 0,  change: "+18.2%", positive: true },
+    { label: "Engagement Rate",   value: `${engagementRate}%`,            change: "-3.6%",  positive: false },
+  ];
+
   return (
     <BusinessLayout>
-      {/* Page header */}
-      <div style={{ marginBottom: 36 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1A1A2E", letterSpacing: "-0.5px" }}>
-          Dashboard
+      {/* Page title */}
+      <div style={{ marginBottom: 8 }}>
+        <h1 style={{ fontSize: 48, fontWeight: 500, fontFamily: "Roboto, sans-serif", color: "#000", margin: 0, lineHeight: 1.17 }}>
+          {business?.name ?? "Your Business"}
         </h1>
-        <p style={{ fontSize: 15, color: "#6B7280", marginTop: 4 }}>
-          {business?.name} — loyalty program overview
+      </div>
+      <div style={{ marginBottom: 32 }}>
+        <p style={{ fontSize: 16, fontFamily: "Lato, sans-serif", fontWeight: 400, color: "#676464", textTransform: "uppercase", letterSpacing: "0.04em", margin: 0 }}>
+          Here&apos;s a snapshot of your business performance.
         </p>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20, marginBottom: 40 }}>
-        {STATS.map(s => (
-          <div key={s.key} style={{ background: "#fff", borderRadius: 18, padding: "24px 20px", boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, marginBottom: 14 }}>
-              {s.icon}
-            </div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: "#1A1A2E", letterSpacing: "-1px", marginBottom: 4 }}>
-              {stats?.[s.key as keyof BusinessStats] ?? 0}
-            </div>
-            <div style={{ fontSize: 13, color: "#6B7280", fontWeight: 500 }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Quick actions */}
-      <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1A1A2E", marginBottom: 16 }}>Quick Actions</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 40 }}>
-        {[
-          { icon: "🔑", title: "Get Code",        desc: "Generate transaction code", path: "/business/generate-code",    bg: "#F0EEFF", color: "#6B48FF" },
-          { icon: "👥", title: "Customers",       desc: "See loyalty members",       path: "/business/customers",        bg: "#E6FFF9", color: "#00C896" },
-          { icon: "🃏", title: "Create Card",     desc: "Design punchcard program",  path: "/business/punchcard/create", bg: "#FFF7ED", color: "#FF9B3D" },
-        ].map(a => (
-          <button
-            key={a.path}
-            onClick={() => navigate(a.path)}
+      {/* Stat cards */}
+      <div style={{ display: "flex", gap: 24, marginBottom: 28, flexWrap: "wrap" }}>
+        {statCards.map((card) => (
+          <div
+            key={card.label}
             style={{
-              display: "flex", flexDirection: "column", gap: 10,
-              padding: "22px 20px", borderRadius: 18, border: "none",
-              background: "#fff", cursor: "pointer", textAlign: "left",
-              boxShadow: "0 2px 16px rgba(0,0,0,0.05)",
-              transition: "transform 0.15s, box-shadow 0.15s",
+              background: "#fff",
+              borderRadius: 20,
+              padding: "22px 28px",
+              minWidth: 200,
+              flex: "1 1 200px",
+              boxShadow: "0px 4px 4px rgba(0,0,0,0.25)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 16px rgba(0,0,0,0.05)"; }}
           >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: a.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{a.icon}</div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#1A1A2E" }}>{a.title}</div>
-              <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>{a.desc}</div>
+            <div style={{ fontSize: 18, fontWeight: 500, fontFamily: "Inter, sans-serif", color: "#000", marginBottom: 12 }}>
+              {card.label}
             </div>
-          </button>
+            <div style={{ fontSize: 46, fontWeight: 500, fontFamily: "sans-serif", color: "#000", lineHeight: 1.2, marginBottom: 16 }}>
+              {card.value}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {card.positive
+                ? <TrendingUp size={20} color="#24C55F" />
+                : <TrendingDown size={20} color="#FF0000" />
+              }
+              <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "Inter, sans-serif", color: card.positive ? "#24C55F" : "#FF0000" }}>
+                {card.change}
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 500, fontFamily: "Inter, sans-serif", color: "#000" }}>
+                last week
+              </span>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* Active punchcard */}
-      {business?.active_template && (
-        <>
-          <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1A1A2E", marginBottom: 16 }}>Active Loyalty Card</h2>
-          <div style={{ background: "#fff", borderRadius: 18, padding: "24px", boxShadow: "0 2px 16px rgba(0,0,0,0.05)", display: "flex", alignItems: "center", gap: 20 }}>
-            {/* Mini punchcard visual */}
-            <div style={{ background: `linear-gradient(135deg, ${business.logo_color ?? "#3F3CA8"}, ${business.logo_color ?? "#252178"}BB)`, borderRadius: 14, width: 72, height: 72, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>
-              🃏
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#1A1A2E" }}>{business.active_template.name}</div>
-              <div style={{ fontSize: 13, color: "#6B7280", marginTop: 3 }}>
-                {business.active_template.total_stamps} stamps → {business.active_template.reward_description}
-              </div>
-            </div>
-            <button
-              onClick={() => navigate("/business/punchcard/create")}
-              style={{ padding: "9px 18px", borderRadius: 9, border: "1.5px solid #E5E7EB", background: "#fff", color: "#374151", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-            >
-              Edit
-            </button>
-          </div>
-        </>
-      )}
-
-      {!business?.active_template && (
-        <div style={{ background: "#F8F7FF", borderRadius: 18, padding: "32px", textAlign: "center", border: "2px dashed #E0DEFF" }}>
-          <div style={{ fontSize: 40, marginBottom: 10 }}>🃏</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#1A1A2E", marginBottom: 6 }}>No loyalty card yet</div>
-          <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 20 }}>Create a punchcard to start rewarding customers</div>
-          <button onClick={() => navigate("/business/punchcard/create")} style={{ padding: "12px 24px", borderRadius: 10, border: "none", background: "linear-gradient(180deg, #3F3CA8 0%, #252178 100%)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-            Create Punchcard →
-          </button>
+      {/* Stamp Performance */}
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: 20,
+          padding: "22px 28px",
+          marginBottom: 24,
+          boxShadow: "0px 4px 4px rgba(0,0,0,0.25)",
+        }}
+      >
+        <div style={{ fontSize: 18, fontWeight: 500, fontFamily: "Inter, sans-serif", color: "#000", marginBottom: 18 }}>
+          Stamp Performance
         </div>
-      )}
-      {/* Dev Reset */}
-      <div style={{ marginTop: 48, borderTop: "1px solid #F0F0F0", paddingTop: 24 }}>
+        <div
+          style={{
+            background: "#D9D9D9",
+            borderRadius: 20,
+            height: 320,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#9CA3AF",
+            fontSize: 14,
+          }}
+        >
+          Chart coming soon
+        </div>
+      </div>
+
+      {/* Download Report */}
+      <div style={{ marginBottom: 32 }}>
+        <button
+          style={{
+            background: "none",
+            border: "none",
+            fontSize: 28,
+            fontWeight: 700,
+            fontFamily: "Inter, sans-serif",
+            color: "#000",
+            cursor: "pointer",
+            padding: 0,
+          }}
+        >
+          Download Report
+        </button>
+      </div>
+
+      {/* Dev Tools */}
+      <div style={{ borderTop: "1px solid #E5E7EB", paddingTop: 24 }}>
         <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 12, fontWeight: 600, letterSpacing: "0.06em" }}>DEV TOOLS</div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button
@@ -141,7 +158,7 @@ export default function BusinessDashboard() {
             }}
             style={{ padding: "10px 20px", borderRadius: 9, border: "1.5px solid #FCA5A5", background: "#FEF2F2", color: "#DC2626", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
           >
-            🏪 Reset My Business (re-run onboarding)
+            🏪 Reset My Business
           </button>
           <button
             onClick={async () => {

@@ -4,13 +4,13 @@ import { useAuth } from "../context/AuthContext";
 import { Businesses, UserCards, Business, UserPunchCard } from "../api";
 import UserLayout from "./Layout";
 
-const MONO = "'Space Mono', monospace";
+const DM = "'DM Mono', monospace";
+const SYNE = "'Syne Mono', monospace";
+const BITCOUNT = "'Bitcount Grid Single', 'DM Mono', monospace";
 
 const CAT_EMOJI: Record<string, string> = {
-  // legacy
   Coffee: "☕", Food: "🍕", Books: "📚", Fitness: "💪",
   Beauty: "💇", Retail: "🛍️", Other: "🏪",
-  // new onboarding categories
   "BEAUTY & PERSONAL CARE": "💇", "EDUCATION & TUTORING": "📚",
   "ENTERTAINMENT": "🎵", "FITNESS & RECREATIONAL": "💪",
   "FOOD & BEVERAGE": "🍕", "HEALTH & WELLNESS": "🌿",
@@ -18,116 +18,154 @@ const CAT_EMOJI: Record<string, string> = {
   "OTHER": "🏪",
 };
 
-/* Punchcard matching Component 1.png — uses template's saved colors/icon */
+// Perforated edge between dark header and white body
+function PerforatedEdge() {
+  const circles = 20;
+  const r = 10;
+  const w = 393;
+  const spacing = w / circles;
+  return (
+    <svg width="100%" viewBox={`0 0 ${w} ${r}`} style={{ display: "block", marginBottom: -1 }}>
+      <rect width={w} height={r} fill="#F9F9F9" />
+      {Array.from({ length: circles }).map((_, i) => (
+        <circle key={i} cx={spacing * i + spacing / 2} cy={0} r={r} fill="#0E0E0E" />
+      ))}
+    </svg>
+  );
+}
+
 function PunchCard({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
   const { business, template, stamps_collected } = card;
   const total = template.total_stamps;
-  const cardBg = template.card_color ?? "#1A1A1A";
-  const stampFill = template.stamp_color ?? "#C8A090";
-  const stampIcon = template.stamp_icon ?? (CAT_EMOJI[business.category] ?? "◉");
-  const isRowLayout = template.style === "row";
-  const gridCount = isRowLayout ? Math.min(total, 10) : Math.min(total, 9);
-  const isLightCard = ["#ffffff", "#EAB308", "#F97316", "#fff"].includes(cardBg);
-  const cardText = isLightCard ? "#1A1A1A" : "#fff";
-  const isLightStamp = ["#ffffff", "#EAB308", "#F97316"].includes(stampFill);
+  const cardBg = template.card_color ?? "#50555F";
+  const accentColor = template.stamp_color ?? "#E0E0E0";
+  const stampIcon = template.stamp_icon ?? (CAT_EMOJI[business.category] ?? "★");
+
+  // 5 columns × rows grid
+  const cols = 5;
+  const rows = Math.ceil(total / cols);
+  const cells = cols * rows;
 
   return (
-    <div onClick={onClick} style={{ background: cardBg, borderRadius: 18, padding: "16px 14px 12px", cursor: "pointer" }}>
-      {/* Header: name + icon badge */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-        <div>
-          <div style={{ fontSize: 9, fontFamily: MONO, color: cardText, opacity: 0.6, marginBottom: 2, letterSpacing: "0.06em" }}>YOUR CARD</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: cardText, letterSpacing: "-0.3px" }}>{business.name}</div>
+    <div
+      onClick={onClick}
+      style={{
+        background: cardBg,
+        borderRadius: 5,
+        padding: "16px 14px",
+        cursor: "pointer",
+        boxShadow: "0px 4px 4px rgba(0,0,0,0.25)",
+        border: "1px solid rgba(128,128,128,0.2)",
+      }}
+    >
+      {/* Business name + label pill */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ fontFamily: SYNE, fontSize: 32, fontWeight: 400, color: accentColor, lineHeight: 1, letterSpacing: "0.02em" }}>
+          {business.name}
         </div>
-        <div style={{ width: 34, height: 34, borderRadius: "50%", border: `2px solid ${stampFill}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-          {stampIcon}
+        <div style={{ border: `0.8px solid ${accentColor}`, borderRadius: 20, padding: "2px 8px", fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: accentColor, textTransform: "uppercase", whiteSpace: "nowrap", marginTop: 4 }}>
+          {business.name}
         </div>
       </div>
 
-      {/* Stamps */}
-      {isRowLayout ? (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-          {Array.from({ length: gridCount }).map((_, i) => {
-            const filled = i < stamps_collected;
-            return (
-              <div key={i} style={{ width: 30, height: 30, borderRadius: "50%", background: filled ? stampFill : "transparent", border: `2px solid ${filled ? stampFill : `${cardText}33`}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: filled ? 16 : 0, color: filled ? (isLightStamp ? "#1A1A1A" : "#fff") : `${cardText}55` }}>
-                {filled ? stampIcon : ""}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 7, marginBottom: 14 }}>
-          {Array.from({ length: gridCount }).map((_, i) => {
-            const filled = i < stamps_collected;
-            const isLast = i === gridCount - 1;
-            return (
-              <div key={i} style={{ aspectRatio: "1", borderRadius: "50%", background: filled ? stampFill : "transparent", border: `2px solid ${filled ? stampFill : `${cardText}33`}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: filled ? 26 : (isLast ? 18 : 10), fontFamily: MONO, color: filled ? (isLightStamp ? "#1A1A1A" : "#fff") : (isLast ? `${cardText}25` : `${cardText}60`), fontWeight: 700 }}>
-                {filled ? stampIcon : (isLast ? stampIcon : (i + 1).toString().padStart(2, "0"))}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Stamp grid */}
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 42px)`, gap: "11px", marginBottom: 12 }}>
+        {Array.from({ length: cells }).map((_, i) => {
+          const isLast = i === total - 1;
+          const isFilled = i < stamps_collected;
+          const isWithinTotal = i < total;
 
-      {/* Divider */}
-      <div style={{ height: 1, background: `${cardText}20`, marginBottom: 10 }} />
+          if (!isWithinTotal) return null;
 
-      {/* Footer: reward + counter */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontSize: 11, fontFamily: MONO, color: cardText, opacity: 0.85, flex: 1, marginRight: 8 }}>{template.reward_description}</div>
-        <div style={{ fontSize: 8, fontFamily: MONO, color: cardText, background: `${cardText}18`, padding: "4px 10px", borderRadius: 999, fontWeight: 700, whiteSpace: "nowrap" }}>
+          return (
+            <div
+              key={i}
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: "50%",
+                border: `2px solid ${isFilled ? accentColor : accentColor + "60"}`,
+                background: isFilled ? accentColor + "22" : "transparent",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: SYNE,
+                fontSize: 14,
+                color: isFilled ? accentColor : accentColor + "80",
+                textTransform: "uppercase",
+              }}
+            >
+              {isLast ? stampIcon : (i + 1).toString().padStart(2, "0")}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div style={{ borderTop: `1px solid ${accentColor}20`, paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontFamily: DM, fontSize: 9, color: accentColor, opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          {template.reward_description}
+        </span>
+        <span style={{ fontFamily: SYNE, fontSize: 12, color: accentColor }}>
           {stamps_collected.toString().padStart(2, "0")}/{total.toString().padStart(2, "0")}
-        </div>
+        </span>
       </div>
     </div>
   );
 }
 
-/* Compact dark row for additional reward cards */
 function RewardRow({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
   const { business, stamps_collected, template } = card;
+  const accentColor = template.stamp_color ?? "#E0E0E0";
+  const cardBg = template.card_color ?? "#50555F";
   return (
-    <div onClick={onClick} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 14px", background: "#1A1A1A", borderRadius: 999, marginTop: 8, cursor: "pointer" }}>
-      <div style={{ fontSize: 9, fontFamily: MONO, fontWeight: 700, color: "#fff", background: "rgba(255,255,255,0.15)", padding: "4px 12px", borderRadius: 999 }}>
-        {business.name.toUpperCase()}
-      </div>
-      <div style={{ fontSize: 9, fontFamily: MONO, color: "#fff", background: "rgba(255,255,255,0.15)", padding: "4px 12px", borderRadius: 999, fontWeight: 700 }}>
+    <div
+      onClick={onClick}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 14px", background: cardBg, borderRadius: 999,
+        cursor: "pointer", border: "1px solid rgba(128,128,128,0.2)",
+      }}
+    >
+      <span style={{ fontFamily: DM, fontSize: 9, fontWeight: 700, color: accentColor, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        {business.name}
+      </span>
+      <span style={{ fontFamily: SYNE, fontSize: 10, color: accentColor }}>
         {stamps_collected.toString().padStart(2, "0")}/{template.total_stamps.toString().padStart(2, "0")}
-      </div>
+      </span>
     </div>
   );
 }
 
-/* TOP PICKS card — photo style */
-function TopPickCard({ biz, onClick }: { biz: Business; onClick: () => void }) {
+function StoryCircle({ card, onClick }: { card: UserPunchCard; onClick: () => void }) {
+  const color = card.business.logo_color ?? "#444";
   return (
-    <div onClick={onClick} style={{ flex: 1, borderRadius: 14, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-      <div style={{ height: 110, background: `linear-gradient(160deg, ${biz.logo_color}AA, ${biz.logo_color}55)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, position: "relative" }}>
-        {CAT_EMOJI[biz.category ?? ""] ?? biz.name[0]}
+    <div onClick={onClick} style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, cursor: "pointer" }}>
+      <div style={{
+        width: 66, height: 66, borderRadius: "50%",
+        border: "2px solid #F9F9F9",
+        background: `linear-gradient(135deg, ${color}44, ${color}22)`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 26, overflow: "hidden",
+      }}>
+        {CAT_EMOJI[card.business.category] ?? card.business.name[0]}
       </div>
-      <div style={{ padding: "8px 10px 10px", background: "#fff" }}>
-        <div style={{ fontSize: 11, fontWeight: 700, fontFamily: MONO, color: "#0D0D0D", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{biz.name}</div>
-        <div style={{ fontSize: 8, fontFamily: MONO, color: "#9CA3AF" }}>0.1 mi away</div>
-        <div style={{ fontSize: 8, fontFamily: MONO, color: "#9CA3AF" }}>★ {biz.rating} rating</div>
-      </div>
+      <span style={{ fontFamily: DM, fontSize: 8, color: "#F9F9F9", textAlign: "center", maxWidth: 66, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.04em" }}>
+        {card.business.name.toLowerCase().slice(0, 10)}
+      </span>
     </div>
   );
 }
 
-/* STUDENT-RUN card with verified badge */
-function StudentCard({ biz, onClick }: { biz: Business; onClick: () => void }) {
+function BusinessTile({ biz, onClick }: { biz: Business; onClick: () => void }) {
   return (
-    <div onClick={onClick} style={{ borderRadius: 14, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", position: "relative" }}>
-      <div style={{ height: 110, background: `linear-gradient(160deg, ${biz.logo_color}88, ${biz.logo_color}33)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 38 }}>
+    <div onClick={onClick} style={{ flex: "0 0 130px", borderRadius: 12, overflow: "hidden", cursor: "pointer", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ height: 80, background: `linear-gradient(160deg, ${biz.logo_color}99, ${biz.logo_color}33)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34 }}>
         {CAT_EMOJI[biz.category ?? ""] ?? biz.name[0]}
       </div>
-      {/* Heart icon */}
-      <div style={{ position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>♡</div>
-      <div style={{ padding: "8px 10px 10px", background: "#fff" }}>
-        <div style={{ fontSize: 10, fontWeight: 700, fontFamily: MONO, color: "#0D0D0D", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{biz.name}</div>
-        <div style={{ fontSize: 8, fontFamily: MONO, color: "#3F3CA8", marginBottom: 1 }}>Verified CMU Student</div>
-        <div style={{ fontSize: 8, fontFamily: MONO, color: "#9CA3AF" }}>★ {biz.rating} rating</div>
+      <div style={{ padding: "7px 10px 9px" }}>
+        <div style={{ fontFamily: DM, fontSize: 9, fontWeight: 700, color: "#F9F9F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 2 }}>{biz.name}</div>
+        <div style={{ fontFamily: DM, fontSize: 8, color: "#6B7280" }}>★ {biz.rating}</div>
       </div>
     </div>
   );
@@ -137,7 +175,6 @@ const ALL_CATEGORIES = [
   "FOOD & BEVERAGE", "FITNESS & RECREATIONAL", "BEAUTY & PERSONAL CARE",
   "ENTERTAINMENT", "HEALTH & WELLNESS", "EDUCATION & TUTORING",
   "HOME SERVICES", "RETAIL", "TECHNOLOGY SERVICES", "OTHER",
-  // legacy seeds
   "Coffee", "Food", "Books", "Fitness", "Beauty", "Retail",
 ];
 
@@ -157,16 +194,12 @@ export default function UserDashboard() {
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
-  const firstName = user?.name?.split(" ")[0]?.toUpperCase() ?? "FRIEND";
+  const firstName = user?.name?.split(" ")[0] ?? "Friend";
   const myCards = userCards.filter(c => !c.is_completed);
   const firstCard = myCards[0] ?? null;
   const restCards = myCards.slice(1, 3);
 
-  // Derive categories that actually exist in the loaded businesses list
-  const presentCategories = ALL_CATEGORIES.filter(cat =>
-    businesses.some(b => b.category === cat)
-  );
-
+  const presentCategories = ALL_CATEGORIES.filter(cat => businesses.some(b => b.category === cat));
   const filtered = businesses.filter(b => {
     const matchesSearch = !search || b.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = !activeCategory || b.category === activeCategory;
@@ -175,124 +208,119 @@ export default function UserDashboard() {
 
   return (
     <UserLayout>
-      <div style={{ minHeight: "100vh", background: "#F5F5F5" }}>
+      <div style={{ minHeight: "100vh", background: "#0E0E0E" }}>
 
-        {/* Search bar */}
-        <div style={{ background: "#fff", paddingTop: 52, paddingBottom: 10, paddingLeft: 14, paddingRight: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#F0F0F0", borderRadius: 10, padding: "9px 12px" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinecap="round">
+        {/* ── Dark header ── */}
+        <div style={{ padding: "52px 20px 24px" }}>
+
+          {/* Location */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 18 }}>
+            <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(249,249,249,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>📍</div>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "#F9F9F9" }}>Carnegie Mellon</span>
+            <span style={{ fontSize: 8, color: "#F9F9F9", opacity: 0.4 }}>▾</span>
+          </div>
+
+          {/* Greeting */}
+          <div style={{ fontFamily: BITCOUNT, fontWeight: 500, fontSize: 40, color: "#F9F9F9", textTransform: "uppercase", lineHeight: 1.1, marginBottom: 4 }}>
+            Hi {firstName}!
+          </div>
+          <div style={{ fontFamily: DM, fontSize: 11, color: "#F9F9F9", textTransform: "uppercase", letterSpacing: "0.07em", opacity: 0.75, marginBottom: 20 }}>
+            Thanks for shopping locally &amp; sustainably.
+          </div>
+
+          {/* Search bar */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, border: "1px solid rgba(255,255,255,0.5)", borderRadius: 15, padding: "11px 14px", marginBottom: 22 }}>
+            <svg width="10" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" strokeLinecap="round">
               <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
             </svg>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Punchcard..." style={{ border: "none", background: "transparent", outline: "none", fontFamily: MONO, fontSize: 11, color: "#0D0D0D", flex: 1 }} />
-          </div>
-        </div>
-
-        {/* Category filter pills */}
-        {presentCategories.length > 0 && (
-          <div style={{ background: "#fff", borderBottom: "1px solid #F0F0F0", paddingLeft: 14, paddingRight: 14, paddingTop: 8, paddingBottom: 10 }}>
-            <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
-              <button
-                onClick={() => setActiveCategory(null)}
-                style={{
-                  flexShrink: 0, padding: "5px 13px", borderRadius: 999,
-                  border: "1.5px solid " + (activeCategory === null ? "#0D0D0D" : "#E0E0E0"),
-                  background: activeCategory === null ? "#0D0D0D" : "transparent",
-                  color: activeCategory === null ? "#fff" : "#6B7280",
-                  fontFamily: MONO, fontSize: 8, fontWeight: 700,
-                  letterSpacing: "0.06em", cursor: "pointer", whiteSpace: "nowrap",
-                }}
-              >
-                ALL
-              </button>
-              {presentCategories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                  style={{
-                    flexShrink: 0, padding: "5px 13px", borderRadius: 999,
-                    border: "1.5px solid " + (activeCategory === cat ? "#0D0D0D" : "#E0E0E0"),
-                    background: activeCategory === cat ? "#0D0D0D" : "transparent",
-                    color: activeCategory === cat ? "#fff" : "#6B7280",
-                    fontFamily: MONO, fontSize: 8, fontWeight: 700,
-                    letterSpacing: "0.06em", cursor: "pointer", whiteSpace: "nowrap",
-                  }}
-                >
-                  {CAT_EMOJI[cat] ?? ""} {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* HI [NAME]! */}
-        <div style={{ background: "#fff", padding: "14px 16px 16px", borderBottom: "1px solid #F0F0F0" }}>
-          <div style={{ fontSize: 32, fontWeight: 800, color: "#0D0D0D", letterSpacing: "-1px", marginBottom: 4, lineHeight: 1.1 }}>
-            HI, {firstName}!
-          </div>
-          <div style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", letterSpacing: "0.06em", marginBottom: myCards.length > 0 ? 14 : 0 }}>
-            MAKE THE SMARTER, LOCALLY &amp; SUSTAINABLY.
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search Punchcard..."
+              style={{ border: "none", background: "transparent", outline: "none", fontFamily: DM, fontSize: 12, fontWeight: 500, color: "#F9F9F9", flex: 1 }}
+            />
           </div>
 
           {/* Story circles */}
           {myCards.length > 0 && (
-            <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4 }}>
+            <div style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
               {myCards.map(card => (
-                <div key={card.id} onClick={() => navigate(`/businesses/${card.business.id}`)} style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
-                  <div style={{ width: 54, height: 54, borderRadius: "50%", border: "2px solid #0D0D0D", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, background: `linear-gradient(135deg, ${card.business.logo_color}33, ${card.business.logo_color}66)`, overflow: "hidden" }}>
-                    {CAT_EMOJI[card.business.category] ?? card.business.name[0]}
-                  </div>
-                  <div style={{ fontSize: 7, fontFamily: MONO, color: "#0D0D0D", textAlign: "center", maxWidth: 56, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {card.business.name.toLowerCase().slice(0, 9)}
-                  </div>
-                </div>
+                <StoryCircle key={card.id} card={card} onClick={() => navigate(`/businesses/${card.business.id}`)} />
               ))}
             </div>
           )}
         </div>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: 60, fontFamily: MONO, fontSize: 11, color: "#9CA3AF" }}>LOADING...</div>
-        ) : (
-          <>
-            {/* YOUR REWARDS */}
-            {firstCard && (
-              <div style={{ background: "#fff", padding: "14px 14px 16px", marginTop: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, fontFamily: MONO, color: "#0D0D0D", letterSpacing: "0.06em" }}>YOUR REWARDS</div>
-                  <div onClick={() => navigate("/wallet")} style={{ fontSize: 9, fontFamily: MONO, color: "#9CA3AF", cursor: "pointer" }}>View all ▦</div>
-                </div>
-                <PunchCard card={firstCard} onClick={() => navigate(`/businesses/${firstCard.business.id}`)} />
-                {restCards.map(card => (
-                  <RewardRow key={card.id} card={card} onClick={() => navigate(`/businesses/${card.business.id}`)} />
-                ))}
-              </div>
-            )}
+        {/* ── Perforated edge ── */}
+        <PerforatedEdge />
 
-            {/* TOP PICKS NEAR YOU */}
-            {filtered.length > 0 && (
-              <div style={{ padding: "16px 14px 0" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, fontFamily: MONO, color: "#0D0D0D", letterSpacing: "0.06em", marginBottom: 12 }}>TOP PICKS NEAR YOU</div>
-                <div style={{ display: "flex", gap: 10 }}>
-                  {filtered.slice(0, 2).map(biz => (
-                    <TopPickCard key={biz.id} biz={biz} onClick={() => navigate(`/businesses/${biz.id}`)} />
+        {/* ── White body ── */}
+        <div style={{ background: "#F9F9F9", padding: "20px 20px 100px" }}>
+
+          {loading ? (
+            <div style={{ textAlign: "center", padding: 60, fontFamily: DM, fontSize: 11, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Loading...</div>
+          ) : (
+            <>
+              {/* Your Rewards */}
+              {firstCard ? (
+                <div style={{ marginBottom: 32 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 12 }}>
+                    <span style={{ fontFamily: DM, fontSize: 14, fontWeight: 500, color: "#0E0E0E", textTransform: "uppercase", letterSpacing: "0.05em" }}>Your Rewards</span>
+                    <button onClick={() => navigate("/wallet")} style={{ background: "none", border: "none", fontFamily: "'Inter', sans-serif", fontSize: 12, color: "#727272", cursor: "pointer", padding: 0 }}>
+                      View all
+                    </button>
+                  </div>
+                  <PunchCard card={firstCard} onClick={() => navigate(`/businesses/${firstCard.business.id}`)} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+                    {restCards.map(card => (
+                      <RewardRow key={card.id} card={card} onClick={() => navigate(`/businesses/${card.business.id}`)} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "32px 0 40px", fontFamily: DM, color: "#9CA3AF" }}>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>🃏</div>
+                  <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em" }}>No rewards yet — join a business!</div>
+                </div>
+              )}
+
+              {/* Category filter */}
+              {presentCategories.length > 0 && (
+                <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 14, scrollbarWidth: "none" }}>
+                  <button
+                    onClick={() => setActiveCategory(null)}
+                    style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 999, border: `1.5px solid ${activeCategory === null ? "#0E0E0E" : "#D1D5DB"}`, background: activeCategory === null ? "#0E0E0E" : "transparent", color: activeCategory === null ? "#F9F9F9" : "#6B7280", fontFamily: DM, fontSize: 8, fontWeight: 700, letterSpacing: "0.06em", cursor: "pointer", whiteSpace: "nowrap" }}
+                  >
+                    ALL
+                  </button>
+                  {presentCategories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                      style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 999, border: `1.5px solid ${activeCategory === cat ? "#0E0E0E" : "#D1D5DB"}`, background: activeCategory === cat ? "#0E0E0E" : "transparent", color: activeCategory === cat ? "#F9F9F9" : "#6B7280", fontFamily: DM, fontSize: 8, fontWeight: 700, letterSpacing: "0.06em", cursor: "pointer", whiteSpace: "nowrap" }}
+                    >
+                      {CAT_EMOJI[cat] ?? ""} {cat}
+                    </button>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* STUDENT-RUN */}
-            {filtered.length > 0 && (
-              <div style={{ padding: "16px 14px 100px" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, fontFamily: MONO, color: "#0D0D0D", letterSpacing: "0.06em", marginBottom: 12 }}>STUDENT-RUN</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {filtered.map(biz => (
-                    <StudentCard key={biz.id} biz={biz} onClick={() => navigate(`/businesses/${biz.id}`)} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+              {/* Near You */}
+              {filtered.length > 0 && (
+                <>
+                  <div style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, color: "#0E0E0E", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12 }}>
+                    Near You
+                  </div>
+                  <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+                    {filtered.map(biz => (
+                      <BusinessTile key={biz.id} biz={biz} onClick={() => navigate(`/businesses/${biz.id}`)} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </UserLayout>
   );

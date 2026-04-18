@@ -1,13 +1,17 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Home, Users, QrCode, HelpCircle, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
-  { icon: "▦", label: "Dashboard",     path: "/business/dashboard" },
-  { icon: "◎", label: "Generate Code", path: "/business/generate-code" },
-  { icon: "✦", label: "Create Card",   path: "/business/punchcard/create" },
-  { icon: "◈", label: "Customers",     path: "/business/customers" },
-  { icon: "⊙", label: "Profile",       path: "/business/profile" },
+  { icon: Home,   label: "Homepage",             path: "/business/dashboard" },
+  { icon: Users,  label: "Customers",             path: "/business/customers" },
+  { icon: QrCode, label: "Authenticate Purchase", path: "/business/generate-code" },
+];
+
+const BOTTOM_ITEMS = [
+  { icon: HelpCircle, label: "Help",     path: "/business/help" },
+  { icon: Settings,   label: "Settings", path: "/business/profile" },
 ];
 
 export default function BusinessLayout({ children }: { children: ReactNode }) {
@@ -16,12 +20,13 @@ export default function BusinessLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F0EFFA" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#F4F4F4" }}>
       {/* Sidebar */}
       <aside
         style={{
-          width: 220,
-          background: "linear-gradient(180deg, #1E1C5E 0%, #252178 60%, #3F3CA8 100%)",
+          width: 306,
+          background: "rgba(255,255,255,0.75)",
+          backdropFilter: "blur(8px)",
           display: "flex",
           flexDirection: "column",
           position: "fixed",
@@ -29,120 +34,131 @@ export default function BusinessLayout({ children }: { children: ReactNode }) {
           left: 0,
           bottom: 0,
           zIndex: 100,
-          boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
+          boxShadow: "4px 0px 4px rgba(0,0,0,0.1)",
         }}
       >
         {/* Brand */}
-        <div style={{ padding: "28px 20px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 38, height: 38, borderRadius: 10,
-                background: "rgba(255,255,255,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontSize: 18, fontWeight: 800,
-              }}
-            >
-              N
-            </div>
-            <div>
-              <div style={{ color: "#fff", fontWeight: 700, fontSize: 15, letterSpacing: "-0.3px" }}>NeighborGood</div>
-              <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, marginTop: 1 }}>Business Portal</div>
-            </div>
+        <div style={{ padding: "21px 28px 0", marginBottom: 24 }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontFamily: "'Bitcount Grid Single', 'DM Mono', monospace", fontWeight: 400, fontSize: 28, letterSpacing: "0.04em", textTransform: "uppercase", color: "#1a1a1a", lineHeight: 1.2 }}>
+              PUNCHCARD
+            </span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 500, fontSize: 8, letterSpacing: "0.07em", textTransform: "uppercase", color: "#1a1a1a", marginTop: 2 }}>
+              Shop Small. Punch Big
+            </span>
           </div>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: "16px 12px" }}>
+        <nav style={{ flex: 1, padding: "0 28px", display: "flex", flexDirection: "column", gap: 30, marginTop: 166 - 21 - 60 }}>
           {NAV_ITEMS.map(item => {
-            const active = location.pathname === item.path;
+            const active = location.pathname === item.path ||
+              (item.path === "/business/dashboard" && location.pathname === "/business/dashboard");
+            const Icon = item.icon;
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 style={{
-                  display: "flex", alignItems: "center", gap: 10, width: "100%",
-                  padding: "11px 14px", borderRadius: 10, border: "none", cursor: "pointer",
-                  background: active ? "rgba(255,255,255,0.18)" : "transparent",
-                  color: active ? "#fff" : "rgba(255,255,255,0.5)",
-                  fontSize: 14, fontWeight: active ? 600 : 400,
-                  marginBottom: 2, textAlign: "left",
-                  transition: "all 0.15s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                  width: "100%",
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                  border: "none",
+                  cursor: "pointer",
+                  background: active ? "rgba(0,0,0,0.25)" : "transparent",
+                  color: "#fff",
+                  fontSize: 14,
+                  fontFamily: "'DM Mono', monospace",
+                  fontWeight: active ? 500 : 400,
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                  textAlign: "left",
+                  transition: "background 0.15s",
                 }}
-                onMouseEnter={e => {
-                  if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-                  if (!active) e.currentTarget.style.color = "rgba(255,255,255,0.8)";
-                }}
-                onMouseLeave={e => {
-                  if (!active) e.currentTarget.style.background = "transparent";
-                  if (!active) e.currentTarget.style.color = "rgba(255,255,255,0.5)";
-                }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = "rgba(0,0,0,0.08)"; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
               >
-                <span style={{ fontSize: 16, width: 20, textAlign: "center" }}>{item.icon}</span>
-                {item.label}
+                <Icon size={22} color={active ? "#fff" : "#000"} strokeWidth={1.5} />
+                <span style={{ color: active ? "#fff" : "#000" }}>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* User footer */}
-        <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            {user?.picture ? (
-              <img
-                src={user.picture}
-                style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.2)" }}
-                alt="avatar"
-              />
-            ) : (
-              <div
+        {/* Divider */}
+        <div style={{ margin: "0 22px", borderTop: "1px solid #7B7B7B" }} />
+
+        {/* Bottom nav */}
+        <div style={{ padding: "16px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
+          {BOTTOM_ITEMS.map(item => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
                 style={{
-                  width: 34, height: 34, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.15)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#fff", fontSize: 13, fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                  width: "100%",
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                  border: "none",
+                  cursor: "pointer",
+                  background: "transparent",
+                  fontSize: 16,
+                  fontFamily: "'DM Mono', monospace",
+                  fontWeight: 400,
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                  textAlign: "left",
+                  color: "#000",
                 }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.08)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
               >
-                {user?.name?.[0] ?? "U"}
-              </div>
-            )}
-            <div style={{ overflow: "hidden" }}>
-              <div style={{ color: "#fff", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {user?.name ?? "Business Owner"}
-              </div>
-              <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {user?.email}
+                <Icon size={22} color="#000" strokeWidth={1.5} />
+                {item.label}
+              </button>
+            );
+          })}
+
+          {/* User info */}
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.1)", paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {user?.picture ? (
+                <img src={user.picture} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} alt="avatar" />
+              ) : (
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#E5E7EB", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700 }}>
+                  {user?.name?.[0] ?? "U"}
+                </div>
+              )}
+              <div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 500, fontSize: 13, letterSpacing: "0.02em" }}>{user?.name ?? "Business Owner"}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 400, fontSize: 11, color: "#6B7280" }}>Admin</div>
               </div>
             </div>
+            <button
+              onClick={() => navigate("/dashboard")}
+              style={{ width: "100%", padding: "7px 0", borderRadius: 8, border: "1px solid #D1D5DB", background: "transparent", fontSize: 12, cursor: "pointer", fontWeight: 600 }}
+            >
+              👤 Customer View
+            </button>
+            <button
+              onClick={logout}
+              style={{ width: "100%", padding: "7px 0", borderRadius: 8, border: "1px solid #D1D5DB", background: "transparent", color: "#6B7280", fontSize: 12, cursor: "pointer" }}
+            >
+              Sign out
+            </button>
           </div>
-          {/* Switch to customer view */}
-          <button
-            onClick={() => navigate("/dashboard")}
-            style={{
-              width: "100%", padding: "8px 0", borderRadius: 8, marginBottom: 8,
-              border: "none",
-              background: "rgba(255,255,255,0.15)", color: "#fff",
-              fontSize: 12, cursor: "pointer", letterSpacing: "0.3px", fontWeight: 600,
-            }}
-          >
-            👤 Customer View
-          </button>
-          <button
-            onClick={logout}
-            style={{
-              width: "100%", padding: "8px 0", borderRadius: 8,
-              border: "1px solid rgba(255,255,255,0.15)",
-              background: "transparent", color: "rgba(255,255,255,0.6)",
-              fontSize: 12, cursor: "pointer", letterSpacing: "0.3px",
-            }}
-          >
-            Sign out
-          </button>
         </div>
       </aside>
 
       {/* Main */}
-      <main style={{ marginLeft: 220, flex: 1, padding: "36px 40px", minHeight: "100vh" }}>
+      <main style={{ marginLeft: 306, flex: 1, padding: "36px 40px", minHeight: "100vh" }}>
         {children}
       </main>
     </div>
