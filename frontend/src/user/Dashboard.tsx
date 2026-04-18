@@ -159,34 +159,13 @@ function StoryCircle({ card, onClick }: { card: UserPunchCard; onClick: () => vo
 
 function BusinessTile({ biz, onClick }: { biz: Business; onClick: () => void }) {
   return (
-    <div onClick={onClick} style={{ flex: "0 0 160px", borderRadius: 14, overflow: "hidden", cursor: "pointer", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.06)" }}>
-      <div style={{ height: 110, background: `linear-gradient(160deg, ${biz.logo_color}cc, ${biz.logo_color}55)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, position: "relative" }}>
+    <div onClick={onClick} style={{ flex: "0 0 130px", borderRadius: 12, overflow: "hidden", cursor: "pointer", background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ height: 80, background: `linear-gradient(160deg, ${biz.logo_color}99, ${biz.logo_color}33)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34 }}>
         {CAT_EMOJI[biz.category ?? ""] ?? biz.name[0]}
       </div>
-      <div style={{ padding: "8px 12px 10px" }}>
-        <div style={{ fontFamily: DM, fontSize: 9, fontWeight: 700, color: "#F9F9F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>{biz.name}</div>
-        <div style={{ fontFamily: DM, fontSize: 8, color: "#9CA3AF" }}>★ {biz.rating.toFixed(1)}</div>
-      </div>
-    </div>
-  );
-}
-
-function StudentRunTile({ biz, onClick }: { biz: Business; onClick: () => void }) {
-  const schoolColors: Record<string, string> = { "#C41230": "CMU", "#003594": "PITT", "#4B9CD3": "UNC", "#CC0000": "UGA" };
-  const school = schoolColors[biz.logo_color.toUpperCase()] ?? "VERIFIED";
-  const badgeColor = biz.logo_color ?? "#C41230";
-  return (
-    <div onClick={onClick} style={{ borderRadius: 16, overflow: "hidden", cursor: "pointer", background: "#f3f3f3", marginBottom: 14 }}>
-      <div style={{ height: 140, background: `linear-gradient(160deg, ${biz.logo_color}cc, ${biz.logo_color}44)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56, position: "relative" }}>
-        {CAT_EMOJI[biz.category ?? ""] ?? biz.name[0]}
-        <div style={{ position: "absolute", top: 10, right: 10, background: badgeColor, color: "#fff", borderRadius: 999, padding: "3px 8px", fontFamily: DM, fontSize: 8, fontWeight: 700, letterSpacing: "0.06em" }}>
-          {school}
-        </div>
-      </div>
-      <div style={{ padding: "10px 14px 12px" }}>
-        <div style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, color: "#0E0E0E", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>{biz.name}</div>
-        <div style={{ fontFamily: DM, fontSize: 9, color: "#6B7280", marginBottom: 2 }}>Verified {school} Student</div>
-        <div style={{ fontFamily: DM, fontSize: 9, color: "#6B7280" }}>★ {biz.rating.toFixed(1)} rating</div>
+      <div style={{ padding: "7px 10px 9px" }}>
+        <div style={{ fontFamily: DM, fontSize: 9, fontWeight: 700, color: "#F9F9F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 2 }}>{biz.name}</div>
+        <div style={{ fontFamily: DM, fontSize: 8, color: "#6B7280" }}>★ {biz.rating}</div>
       </div>
     </div>
   );
@@ -326,29 +305,17 @@ export default function UserDashboard() {
                 </div>
               )}
 
-              {/* Top Picks Near You */}
+              {/* Near You */}
               {filtered.length > 0 && (
                 <>
                   <div style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, color: "#0E0E0E", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12 }}>
-                    Top Picks Near You
+                    Near You
                   </div>
-                  <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 16, scrollbarWidth: "none" }}>
+                  <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
                     {filtered.map(biz => (
                       <BusinessTile key={biz.id} biz={biz} onClick={() => navigate(`/businesses/${biz.id}`)} />
                     ))}
                   </div>
-                </>
-              )}
-
-              {/* Student-Run */}
-              {filtered.length > 0 && (
-                <>
-                  <div style={{ fontFamily: DM, fontSize: 11, fontWeight: 700, color: "#0E0E0E", letterSpacing: "0.06em", textTransform: "uppercase", margin: "24px 0 12px" }}>
-                    Student-Run
-                  </div>
-                  {filtered.slice(0, 4).map(biz => (
-                    <StudentRunTile key={biz.id} biz={biz} onClick={() => navigate(`/businesses/${biz.id}`)} />
-                  ))}
                 </>
               )}
             </>
