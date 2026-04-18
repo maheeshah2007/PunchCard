@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__figma__get_figma_data",
+      "Bash(python3 *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

@@ -7,6 +7,7 @@ import RoleSelect from "./pages/RoleSelect";
 
 import UserDashboard        from "./user/Dashboard";
 import UserWallet           from "./user/Wallet";
+import UserBrowse           from "./user/Browse";
 import BusinessDetail       from "./user/BusinessDetail";
 import AuthenticatePurchase from "./user/AuthenticatePurchase";
 
@@ -37,6 +38,7 @@ export default function App() {
 
         <Route path="/dashboard"      element={<UserDashboard />} />
         <Route path="/wallet"         element={<UserWallet />} />
+        <Route path="/browse"         element={<UserBrowse />} />
         <Route path="/businesses/:id" element={<BusinessDetail />} />
         <Route path="/authenticate"   element={<AuthenticatePurchase />} />
 

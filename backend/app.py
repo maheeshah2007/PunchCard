@@ -57,6 +57,7 @@ class BusinessDB(Base):
     address = Column(String, nullable=True)
     logo_color = Column(String, default="#6B48FF")
     cover_color = Column(String, default="#EDE9FF")
+    logo_image = Column(Text, nullable=True)
     rating = Column(Float, default=0.0)
     is_mock = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -73,6 +74,9 @@ class PunchCardTemplateDB(Base):
     total_stamps = Column(Integer, default=10)
     reward_description = Column(String, nullable=False)
     style = Column(String, default="classic")
+    card_color = Column(String, default="#1A1A1A")
+    stamp_color = Column(String, default="#C8A090")
+    stamp_icon = Column(String, default="⭕")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     business = relationship("BusinessDB", back_populates="templates")
@@ -98,7 +102,7 @@ class AuthCodeDB(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     business_id = Column(Integer, ForeignKey("businesses.id"), nullable=False)
     template_id = Column(Integer, ForeignKey("punchcard_templates.id"), nullable=False)
-    code = Column(String(6), nullable=False)
+    code = Column(String(4), nullable=False)
     expires_at = Column(DateTime, nullable=False)
     is_used = Column(Boolean, default=False)
     used_by_user_id = Column(String, nullable=True)
@@ -194,32 +198,61 @@ SEED_BUSINESSES = [
 
 
 def seed_database(db: Session):
-    if db.query(BusinessDB).filter(BusinessDB.is_mock == True).first():
-        return
-    seed_owner = db.query(UserDB).filter(UserDB.id == SEED_OWNER_ID).first()
-    if not seed_owner:
-        seed_owner = UserDB(id=SEED_OWNER_ID, email="demo@neighborgood.app", name="NeighborGood Demo", role="business")
-        db.add(seed_owner)
-        db.flush()
-    for biz_data in SEED_BUSINESSES:
-        tmpl_data = biz_data.pop("template")
-        biz = BusinessDB(owner_id=SEED_OWNER_ID, is_mock=True, **biz_data)
-        db.add(biz)
-        db.flush()
-        db.add(PunchCardTemplateDB(business_id=biz.id, **tmpl_data))
-        biz_data["template"] = tmpl_data
-    db.commit()
+    # Ensure dev bypass users always exist
+    for dev_id, dev_role, dev_name in [
+        ("dev_user_00001", "user", "Dev Customer"),
+        ("dev_business_00001", "business", "Dev Business"),
+    ]:
+        if not db.query(UserDB).filter(UserDB.id == dev_id).first():
+            db.add(UserDB(id=dev_id, email=f"{dev_id}@localhost", name=dev_name, role=dev_role))
+    db.flush()
+
+    already_seeded = db.query(BusinessDB).filter(BusinessDB.is_mock == True).first()
+    if not already_seeded:
+        seed_owner = db.query(UserDB).filter(UserDB.id == SEED_OWNER_ID).first()
+        if not seed_owner:
+            seed_owner = UserDB(id=SEED_OWNER_ID, email="demo@neighborgood.app", name="NeighborGood Demo", role="business")
+            db.add(seed_owner)
+            db.flush()
+        for biz_data in SEED_BUSINESSES:
+            tmpl_data = biz_data.pop("template")
+            biz = BusinessDB(owner_id=SEED_OWNER_ID, is_mock=True, **biz_data)
+            db.add(biz)
+            db.flush()
+            db.add(PunchCardTemplateDB(business_id=biz.id, **tmpl_data))
+            biz_data["template"] = tmpl_data
+        db.commit()
+
+    # Seed dev customer with sample punchcards so the dashboard shows real data
+    dev_user = db.query(UserDB).filter(UserDB.id == "dev_user_00001").first()
+    if dev_user and not db.query(UserPunchCardDB).filter(UserPunchCardDB.user_id == "dev_user_00001").first():
+        templates = db.query(PunchCardTemplateDB).limit(3).all()
+        stamps = [4, 3, 4]  # stamps_collected for each card
+        for tmpl, s in zip(templates, stamps):
+            db.add(UserPunchCardDB(user_id="dev_user_00001", template_id=tmpl.id, stamps_collected=s))
+        db.commit()
 
 
 GOOGLE_CLIENT_ID = "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com"
 
 app = FastAPI(title="NeighborGood API")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:5177"], allow_methods=["*"], allow_headers=["*"])
 
 
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
+    # Add new columns to existing DBs without losing data
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        for stmt in [
+            "ALTER TABLE businesses ADD COLUMN logo_image TEXT",
+        ]:
+            try:
+                conn.execute(text(stmt))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
     db = SessionLocal()
     try:
         seed_database(db)
@@ -240,6 +273,7 @@ class CreateBusinessRequest(BaseModel):
     address: Optional[str] = None
     logo_color: Optional[str] = "#6B48FF"
     cover_color: Optional[str] = "#EDE9FF"
+    logo_image: Optional[str] = None
 
 class UpdateBusinessRequest(BaseModel):
     name: Optional[str] = None
@@ -248,12 +282,16 @@ class UpdateBusinessRequest(BaseModel):
     address: Optional[str] = None
     logo_color: Optional[str] = None
     cover_color: Optional[str] = None
+    logo_image: Optional[str] = None
 
 class CreateTemplateRequest(BaseModel):
     name: str
     total_stamps: int = 10
     reward_description: str
     style: str = "classic"
+    card_color: str = "#1A1A1A"
+    stamp_color: str = "#C8A090"
+    stamp_icon: str = "⭕"
 
 class GenerateCodeRequest(BaseModel):
     template_id: int
@@ -278,7 +316,7 @@ def require_business(user: UserDB, db: Session) -> BusinessDB:
     return biz
 
 def serialize_template(t: PunchCardTemplateDB) -> dict:
-    return {"id": t.id, "name": t.name, "total_stamps": t.total_stamps, "reward_description": t.reward_description, "style": t.style, "is_active": t.is_active}
+    return {"id": t.id, "name": t.name, "total_stamps": t.total_stamps, "reward_description": t.reward_description, "style": t.style, "is_active": t.is_active, "card_color": t.card_color or "#1A1A1A", "stamp_color": t.stamp_color or "#C8A090", "stamp_icon": t.stamp_icon or "⭕"}
 
 def serialize_business(b: BusinessDB, include_template: bool = True) -> dict:
     active_template = None
@@ -286,7 +324,7 @@ def serialize_business(b: BusinessDB, include_template: bool = True) -> dict:
         active = [t for t in b.templates if t.is_active]
         if active:
             active_template = serialize_template(active[0])
-    return {"id": b.id, "name": b.name, "description": b.description, "category": b.category, "address": b.address, "logo_color": b.logo_color, "cover_color": b.cover_color, "rating": b.rating, "active_template": active_template}
+    return {"id": b.id, "name": b.name, "description": b.description, "category": b.category, "address": b.address, "logo_color": b.logo_color, "cover_color": b.cover_color, "logo_image": b.logo_image, "rating": b.rating, "active_template": active_template}
 
 def serialize_user_punchcard(upc: UserPunchCardDB) -> dict:
     t = upc.template
@@ -297,6 +335,60 @@ def serialize_user_punchcard(upc: UserPunchCardDB) -> dict:
 @app.get("/health")
 def health():
     return {"ok": True}
+
+@app.post("/dev/reset")
+def dev_reset(db: Session = Depends(get_db)):
+    """Dev-only: wipe all non-seed data and reseed fresh."""
+    # Delete all auth codes, user punchcards, non-seed businesses
+    db.query(AuthCodeDB).delete()
+    db.query(UserPunchCardDB).delete()
+    non_seed_biz = db.query(BusinessDB).filter(BusinessDB.is_mock == False).all()
+    for b in non_seed_biz:
+        db.query(PunchCardTemplateDB).filter(PunchCardTemplateDB.business_id == b.id).delete()
+        db.delete(b)
+    # Reset dev users
+    for dev_id in ["dev_user_00001", "dev_business_00001"]:
+        db.query(UserDB).filter(UserDB.id == dev_id).delete()
+    db.flush()
+    # Re-seed dev users
+    db.add(UserDB(id="dev_user_00001", email="dev-user@localhost", name="Dev Customer", role="user"))
+    db.add(UserDB(id="dev_business_00001", email="dev-business@localhost", name="Dev Business", role="business"))
+    db.flush()
+    # Re-seed sample punchcards for dev customer
+    templates = db.query(PunchCardTemplateDB).limit(3).all()
+    for tmpl, s in zip(templates, [4, 3, 4]):
+        db.add(UserPunchCardDB(user_id="dev_user_00001", template_id=tmpl.id, stamps_collected=s))
+    db.commit()
+    return {"ok": True, "message": "Data reset. Dev business needs to re-run onboarding."}
+
+@app.post("/dev/reset-business")
+def dev_reset_business(db: Session = Depends(get_db)):
+    """Dev-only: delete dev_business_00001's business so they re-run onboarding."""
+    biz = db.query(BusinessDB).filter(BusinessDB.owner_id == "dev_business_00001").first()
+    if biz:
+        template_ids = [t.id for t in biz.templates]
+        if template_ids:
+            db.query(UserPunchCardDB).filter(UserPunchCardDB.template_id.in_(template_ids)).delete(synchronize_session=False)
+            db.query(AuthCodeDB).filter(AuthCodeDB.business_id == biz.id).delete()
+            db.query(PunchCardTemplateDB).filter(PunchCardTemplateDB.business_id == biz.id).delete()
+        db.delete(biz)
+        db.commit()
+    return {"ok": True, "message": "Business deleted. Re-run onboarding to create a new one."}
+
+@app.post("/auth/dev-login")
+def dev_login(role: str = "user", db: Session = Depends(get_db)):
+    """Dev-only bypass — skips Google OAuth for local testing."""
+    user_id = f"dev_{role}_00001"
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        user = UserDB(id=user_id, email=f"dev-{role}@localhost", name=f"Dev {role.capitalize()}", role=role)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    elif user.role != role:
+        user.role = role
+        db.commit()
+    return {"ok": True, "user": {"sub": user.id, "email": user.email, "name": user.name, "picture": None, "role": user.role}}
 
 @app.post("/auth/google")
 def auth_google(payload: GoogleCredential, db: Session = Depends(get_db)):
@@ -448,7 +540,7 @@ def generate_code(payload: GenerateCodeRequest, x_user_id: str = Header(None), d
         raise HTTPException(status_code=404, detail="Template not found")
     now = datetime.utcnow()
     db.query(AuthCodeDB).filter(AuthCodeDB.business_id == biz.id, AuthCodeDB.is_used == False, AuthCodeDB.expires_at > now).update({"expires_at": now})
-    code = "".join(random.choices(string.digits, k=6))
+    code = "".join(random.choices(string.digits, k=4))
     expires_at = now + timedelta(minutes=1)
     auth_code = AuthCodeDB(business_id=biz.id, template_id=payload.template_id, code=code, expires_at=expires_at)
     db.add(auth_code)
