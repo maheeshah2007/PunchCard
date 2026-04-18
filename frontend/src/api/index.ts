@@ -16,7 +16,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export interface GoogleUser { sub?: string; email?: string; name?: string; picture?: string; role?: string | null; }
-export interface PunchCardTemplate { id: number; name: string; total_stamps: number; reward_description: string; style: string; is_active?: boolean; }
+export interface PunchCardTemplate { id: number; name: string; total_stamps: number; reward_description: string; style: string; is_active?: boolean; card_color?: string; stamp_color?: string; stamp_icon?: string; }
 export interface Business { id: number; name: string; description?: string; category?: string; address?: string; logo_color: string; cover_color: string; rating: number; active_template?: PunchCardTemplate | null; }
 export interface UserPunchCard { id: number; stamps_collected: number; is_completed: boolean; is_redeemed: boolean; template: PunchCardTemplate; business: { id: number; name: string; logo_color: string; category: string }; }
 export interface BusinessStats { unique_customers: number; total_stamps_given: number; completed_cards: number; total_transactions: number; }
