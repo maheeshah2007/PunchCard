@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import walletImg from "../assets/wallet-and-cards.png";
 
 const BG = "#0E0E0E";
@@ -7,6 +8,11 @@ const PLEX = "'IBM Plex Mono', 'Space Mono', monospace";
 
 export default function Welcome() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
+  const devLogin = (role: "business" | "user") => {
+    setUser({ sub: "dev", email: "dev@test.com", name: "Dev User", role });
+    navigate(role === "business" ? "/business/dashboard" : "/dashboard");
+  };
   return (
     <div
       style={{
@@ -78,6 +84,17 @@ export default function Welcome() {
           I Have an Account
         </button>
       </div>
+
+      {import.meta.env.DEV && (
+        <div style={{ width: "100%", display: "flex", gap: 8, marginTop: 16 }}>
+          <button onClick={() => devLogin("user")} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid #333", background: "transparent", color: "#727272", fontFamily: MONO, fontSize: 11, cursor: "pointer", letterSpacing: "0.04em" }}>
+            DEV: User
+          </button>
+          <button onClick={() => devLogin("business")} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1px solid #333", background: "transparent", color: "#727272", fontFamily: MONO, fontSize: 11, cursor: "pointer", letterSpacing: "0.04em" }}>
+            DEV: Business
+          </button>
+        </div>
+      )}
     </div>
   );
 }
