@@ -14,30 +14,43 @@ export default function Welcome() {
       <div
         style={{
           minHeight: "100vh",
-          backgroundImage: GRID_BG,
-          backgroundRepeat: "repeat",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "0 32px 56px",
+          padding: "32px 24px 56px",
           fontFamily: MONO,
+          background: "#EBEBEB",
         }}
       >
-        {/* Card stack — exact Figma export */}
-        <img
-          src={cardStack}
-          alt="Punchcard"
+        {/* Dark hero card — contains card stack image + branding */}
+        <div
           style={{
             width: "100%",
-            maxWidth: 300,
-            marginBottom: 48,
-            display: "block",
+            maxWidth: 340,
+            background: "#0D0D0D",
+            borderRadius: 28,
+            overflow: "hidden",
+            marginBottom: 32,
           }}
-        />
+        >
+          <img
+            src={cardStack}
+            alt="Punchcard"
+            style={{ width: "100%", display: "block" }}
+          />
+          <div style={{ padding: "20px 24px 28px" }}>
+            <div style={{ fontFamily: PIXEL, fontSize: 18, color: "#fff", letterSpacing: "0.04em", lineHeight: 1.5, marginBottom: 8 }}>
+              PUNCHCARD
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: "rgba(255,255,255,0.6)", letterSpacing: "0.08em" }}>
+              SHOP SMALL. PUNCH BIG 🤖
+            </div>
+          </div>
+        </div>
 
         {/* Buttons */}
-        <div style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12 }}>
           <button
             onClick={() => navigate("/register")}
             style={{
