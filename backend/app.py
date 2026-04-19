@@ -384,7 +384,7 @@ def dev_reset_business(db: Session = Depends(get_db)):
         db.commit()
     return {"ok": True, "message": "Business deleted. Re-run onboarding to create a new one."}
 
-@app.post("/auth/dev-login")
+@app.api_route("/auth/dev-login", methods=["GET", "POST"])
 def dev_login(role: str = "user", db: Session = Depends(get_db)):
     """Dev-only bypass — skips Google OAuth for local testing."""
     user_id = f"dev_{role}_00001"
