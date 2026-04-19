@@ -236,7 +236,16 @@ def seed_database(db: Session):
 GOOGLE_CLIENT_ID = "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com"
 
 app = FastAPI(title="NeighborGood API")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:5177"], allow_methods=["*"], allow_headers=["*"])
+import os as _os
+_LOCAL_IP = _os.environ.get("LOCAL_IP", "")
+_cors_origins = [
+    "http://localhost:5173", "http://localhost:5174",
+    "http://localhost:5175", "http://localhost:5176", "http://localhost:5177",
+]
+if _LOCAL_IP:
+    for _port in range(5173, 5178):
+        _cors_origins.append(f"http://{_LOCAL_IP}:{_port}")
+app.add_middleware(CORSMiddleware, allow_origins=_cors_origins, allow_methods=["*"], allow_headers=["*"])
 
 
 @app.on_event("startup")
