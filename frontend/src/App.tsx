@@ -4,6 +4,7 @@ import { useAuth } from "./context/AuthContext";
 import Welcome    from "./pages/Welcome";
 import Auth       from "./pages/Auth";
 import RoleSelect from "./pages/RoleSelect";
+import DevLogin   from "./pages/DevLogin";
 
 import UserDashboard        from "./user/Dashboard";
 import UserWallet           from "./user/Wallet";
@@ -49,6 +50,7 @@ export default function App() {
         <Route path="/business/customers"        element={<BusinessCustomers />} />
         <Route path="/business/profile"          element={<BusinessProfile />} />
 
+        <Route path="/dev-login" element={<DevLogin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
