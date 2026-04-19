@@ -113,11 +113,24 @@ class AuthCodeDB(Base):
 
 SEED_OWNER_ID = "seed_owner_00001"
 
+BUSINESS_CATEGORIES = [
+    "BEAUTY & PERSONAL CARE",
+    "EDUCATION & TUTORING",
+    "ENTERTAINMENT",
+    "FITNESS & RECREATIONAL",
+    "FOOD & BEVERAGE",
+    "HEALTH & WELLNESS",
+    "HOME SERVICES",
+    "RETAIL",
+    "TECHNOLOGY SERVICES",
+    "OTHER",
+]
+
 SEED_BUSINESSES = [
     {
         "name": "Brew & Bloom Coffee",
         "description": "Your cozy neighborhood coffee spot. Fresh brews, warm vibes, and the best pastries on the block.",
-        "category": "Coffee",
+        "category": "FOOD & BEVERAGE",
         "address": "123 Forbes Ave, Pittsburgh, PA",
         "logo_color": "#6B48FF",
         "cover_color": "#EDE9FF",
@@ -127,7 +140,7 @@ SEED_BUSINESSES = [
     {
         "name": "The Bookworm",
         "description": "Independent bookstore with curated selections, cozy reading nooks, and weekly author events.",
-        "category": "Books",
+        "category": "RETAIL",
         "address": "456 Craig St, Pittsburgh, PA",
         "logo_color": "#FF6B35",
         "cover_color": "#FFF0E9",
@@ -137,7 +150,7 @@ SEED_BUSINESSES = [
     {
         "name": "Slice of Life Pizzeria",
         "description": "Hand-tossed New York style pizza by the slice or whole pie. Open late, always fresh.",
-        "category": "Food",
+        "category": "FOOD & BEVERAGE",
         "address": "789 Murray Ave, Pittsburgh, PA",
         "logo_color": "#FF3535",
         "cover_color": "#FFF0F0",
@@ -147,7 +160,7 @@ SEED_BUSINESSES = [
     {
         "name": "FitZone Gym",
         "description": "State-of-the-art equipment, group classes, and personal training. Your fitness journey starts here.",
-        "category": "Fitness",
+        "category": "FITNESS & RECREATIONAL",
         "address": "101 Baum Blvd, Pittsburgh, PA",
         "logo_color": "#00C896",
         "cover_color": "#E6FFF9",
@@ -157,7 +170,7 @@ SEED_BUSINESSES = [
     {
         "name": "Sweet Tooth Bakery",
         "description": "Artisan pastries, custom cakes, and seasonal treats baked fresh daily by our pastry chefs.",
-        "category": "Food",
+        "category": "FOOD & BEVERAGE",
         "address": "222 S Highland Ave, Pittsburgh, PA",
         "logo_color": "#FF9B3D",
         "cover_color": "#FFF7ED",
@@ -167,7 +180,7 @@ SEED_BUSINESSES = [
     {
         "name": "Noodle House",
         "description": "Authentic Asian noodles and dumplings with recipes from across East Asia. Vegetarian-friendly.",
-        "category": "Food",
+        "category": "FOOD & BEVERAGE",
         "address": "333 Forbes Ave, Pittsburgh, PA",
         "logo_color": "#FF5B5B",
         "cover_color": "#FFF0F0",
@@ -177,7 +190,7 @@ SEED_BUSINESSES = [
     {
         "name": "Campus Cuts",
         "description": "Affordable haircuts and styling for students and locals. Walk-ins welcome.",
-        "category": "Beauty",
+        "category": "BEAUTY & PERSONAL CARE",
         "address": "55 S Craig St, Pittsburgh, PA",
         "logo_color": "#9B59B6",
         "cover_color": "#F5E9FF",
@@ -187,7 +200,7 @@ SEED_BUSINESSES = [
     {
         "name": "Green Bowl",
         "description": "Fresh salads, grain bowls, and smoothies made with locally sourced ingredients.",
-        "category": "Food",
+        "category": "HEALTH & WELLNESS",
         "address": "88 Atwood St, Pittsburgh, PA",
         "logo_color": "#27AE60",
         "cover_color": "#E9FFF0",
@@ -471,6 +484,10 @@ def get_my_templates(x_user_id: str = Header(None), db: Session = Depends(get_db
     user = require_user(x_user_id, db)
     biz = require_business(user, db)
     return [serialize_template(t) for t in biz.templates]
+
+@app.get("/categories")
+def get_categories():
+    return {"categories": BUSINESS_CATEGORIES}
 
 @app.get("/businesses")
 def list_businesses(category: Optional[str] = None, db: Session = Depends(get_db)):

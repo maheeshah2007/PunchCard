@@ -33,6 +33,10 @@ export const Users = {
   setRole: (role: string, headers: Record<string, string>) => request<{ ok: boolean; role: string }>("/users/me/role", { method: "PUT", body: JSON.stringify({ role }), headers }),
 };
 
+export const Categories = {
+  list: () => request<{ categories: string[] }>("/categories"),
+};
+
 export const Businesses = {
   list: (category?: string) => request<Business[]>(`/businesses${category ? `?category=${encodeURIComponent(category)}` : ""}`),
   get: (id: number) => request<Business>(`/businesses/${id}`),

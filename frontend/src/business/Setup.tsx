@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Businesses } from "../api";
+import { Businesses, Categories } from "../api";
 
 const PIXEL = "'Press Start 2P', monospace";
 const MONO  = "'Space Mono', monospace";
@@ -55,14 +55,6 @@ const SUBMIT_BTN: React.CSSProperties = {
   marginTop: 32,
 };
 
-const CATEGORIES: [string, string][] = [
-  ["BEAUTY & PERSONAL CARE", "EDUCATION & TUTORING"],
-  ["ENTERTAINMENT",          "FITNESS & RECREATIONAL"],
-  ["FOOD & BEVERAGE",        "HEALTH & WELLNESS"],
-  ["HOME SERVICES",          "RETAIL"],
-  ["TECHNOLOGY SERVICES",    "OTHER"],
-];
-
 export default function BusinessSetup() {
   const navigate = useNavigate();
   const { authHeaders, user } = useAuth();
@@ -76,6 +68,17 @@ export default function BusinessSetup() {
   const [logoImage, setLogoImage]     = useState<string | null>(null);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState("");
+  const [categories, setCategories]   = useState<string[]>([]);
+  const [catsLoading, setCatsLoading] = useState(false);
+  const [catsError, setCatsError]     = useState("");
+
+  useEffect(() => {
+    setCatsLoading(true);
+    Categories.list()
+      .then(res => setCategories(res.categories))
+      .catch(() => setCatsError("Failed to load categories. Please refresh."))
+      .finally(() => setCatsLoading(false));
+  }, []);
 
   const firstName = user?.name?.split(" ")[0]?.toUpperCase() ?? "USER";
 
@@ -237,10 +240,20 @@ export default function BusinessSetup() {
             </div>
 
             {/* Inner dark panel with 2-column checkbox grid */}
-            <div style={{ background: "#9A9A9A", borderRadius: 14, padding: "20px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-              {CATEGORIES.map(([left, right]) => (
-                <div key={left} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  {[left, right].map(cat => (
+            <div style={{ background: "#9A9A9A", borderRadius: 14, padding: "20px 16px" }}>
+              {catsLoading && (
+                <div style={{ fontFamily: MONO, fontSize: 11, color: "#4B4B4B", textAlign: "center", padding: "16px 0" }}>
+                  LOADING CATEGORIES...
+                </div>
+              )}
+              {catsError && (
+                <div style={{ fontFamily: MONO, fontSize: 11, color: "#DC2626", textAlign: "center", padding: "8px 0" }}>
+                  {catsError}
+                </div>
+              )}
+              {!catsLoading && !catsError && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {categories.map(cat => (
                     <button
                       key={cat}
                       type="button"
@@ -257,7 +270,6 @@ export default function BusinessSetup() {
                         textAlign: "left",
                       }}
                     >
-                      {/* Checkbox visual */}
                       <div style={{
                         width: 14, height: 14, borderRadius: 3,
                         border: "1.5px solid #5A5A5A",
@@ -277,7 +289,7 @@ export default function BusinessSetup() {
                     </button>
                   ))}
                 </div>
-              ))}
+              )}
             </div>
 
             {error && (
