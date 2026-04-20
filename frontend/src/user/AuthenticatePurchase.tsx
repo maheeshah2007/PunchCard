@@ -235,7 +235,7 @@ export default function AuthenticatePurchase() {
               }}
               style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(249,249,249,0.2)", background: "rgba(249,249,249,0.06)", color: "#F9F9F9", fontFamily: IBM, fontSize: 11, outline: "none" }}
             >
-              {businesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              {businesses.map(b => <option key={b.id} value={b.id} style={{ background: "#1A1A1A", color: "#F9F9F9" }}>{b.name}</option>)}
             </select>
           </div>
         )}
