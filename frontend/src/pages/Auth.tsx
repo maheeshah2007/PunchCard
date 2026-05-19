@@ -9,14 +9,14 @@ declare global {
   }
 }
 
-const GOOGLE_CLIENT_ID = "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
 const BG = "#0E0E0E";
 const MONO = "'DM Mono', 'Space Mono', monospace";
 const PLEX = "'IBM Plex Mono', 'Space Mono', monospace";
 
 export default function Auth({ mode }: { mode: "login" | "register" }) {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setAuth } = useAuth();
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState("");
 
@@ -27,9 +27,9 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
         client_id: GOOGLE_CLIENT_ID,
         callback: async (response: { credential: string }) => {
           try {
-            const { user } = await AuthAPI.google(response.credential);
+            const { user, token } = await AuthAPI.google(response.credential);
             const appUser = { sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role };
-            setUser(appUser);
+            setAuth(appUser, token);
             if (!appUser.role) navigate("/role-select");
             else if (appUser.role === "business") navigate("/business/dashboard");
             else navigate("/dashboard");
@@ -45,7 +45,7 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
       const interval = setInterval(() => { if (init()) clearInterval(interval); }, 200);
       return () => clearInterval(interval);
     }
-  }, [navigate, setUser, mode]);
+  }, [navigate, setAuth, mode]);
 
   return (
     <div

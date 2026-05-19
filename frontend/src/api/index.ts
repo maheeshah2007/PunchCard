@@ -24,7 +24,7 @@ export interface Customer { name: string; email: string; picture?: string; stamp
 export interface AuthCodeResult { code: string; expires_at: string; template_id: number; business_id: number; }
 
 export const Auth = {
-  google: (credential: string) => request<{ ok: boolean; user: GoogleUser }>("/auth/google", { method: "POST", body: JSON.stringify({ credential }) }),
+  google: (credential: string) => request<{ ok: boolean; token: string; user: GoogleUser }>("/auth/google", { method: "POST", body: JSON.stringify({ credential }) }),
 };
 
 export const Users = {

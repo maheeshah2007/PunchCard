@@ -3,12 +3,15 @@ NeighborGood PunchCard backend — FastAPI + SQLite
 Run with: uvicorn app:app --reload --port 8001
 """
 
+import os
 import random
 import string
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 
+import jwt
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -21,7 +24,15 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 
-DATABASE_URL = "sqlite:///./neighborgood.db"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./neighborgood.db")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-in-production")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRY_DAYS = 7
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -211,10 +222,14 @@ def seed_database(db: Session):
     db.commit()
 
 
-GOOGLE_CLIENT_ID = "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com"
-
 app = FastAPI(title="NeighborGood API")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 
 @app.on_event("startup")
@@ -226,6 +241,62 @@ def startup():
     finally:
         db.close()
 
+
+# ── JWT helpers ──────────────────────────────────────────────────────────────
+
+def create_access_token(sub: str) -> str:
+    payload = {
+        "sub": sub,
+        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def require_user(authorization: str = Header(None), db: Session = Depends(get_db)) -> UserDB:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    token = authorization[len("Bearer "):]
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        sub: str = payload["sub"]
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Session expired — please sign in again")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid session token")
+    user = db.query(UserDB).filter(UserDB.id == sub).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+
+
+def require_business(user: UserDB, db: Session) -> BusinessDB:
+    biz = db.query(BusinessDB).filter(BusinessDB.owner_id == user.id).first()
+    if not biz:
+        raise HTTPException(status_code=404, detail="Business not found — create one first")
+    return biz
+
+
+# ── Serializers ───────────────────────────────────────────────────────────────
+
+def serialize_template(t: PunchCardTemplateDB) -> dict:
+    return {"id": t.id, "name": t.name, "total_stamps": t.total_stamps, "reward_description": t.reward_description, "style": t.style, "is_active": t.is_active}
+
+def serialize_business(b: BusinessDB, include_template: bool = True) -> dict:
+    active_template = None
+    if include_template:
+        active = [t for t in b.templates if t.is_active]
+        if active:
+            active_template = serialize_template(active[0])
+    return {"id": b.id, "name": b.name, "description": b.description, "category": b.category, "address": b.address, "logo_color": b.logo_color, "cover_color": b.cover_color, "rating": b.rating, "active_template": active_template}
+
+def serialize_user_punchcard(upc: UserPunchCardDB) -> dict:
+    t = upc.template
+    b = t.business
+    return {"id": upc.id, "stamps_collected": upc.stamps_collected, "is_completed": upc.is_completed, "is_redeemed": upc.is_redeemed, "template": serialize_template(t), "business": {"id": b.id, "name": b.name, "logo_color": b.logo_color, "category": b.category}}
+
+
+# ── Request models ─────────────────────────────────────────────────────────────
 
 class GoogleCredential(BaseModel):
     credential: str
@@ -263,40 +334,12 @@ class RedeemCodeRequest(BaseModel):
     business_id: int
 
 
-def require_user(x_user_id: str, db: Session) -> UserDB:
-    if not x_user_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    user = db.query(UserDB).filter(UserDB.id == x_user_id).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return user
-
-def require_business(user: UserDB, db: Session) -> BusinessDB:
-    biz = db.query(BusinessDB).filter(BusinessDB.owner_id == user.id).first()
-    if not biz:
-        raise HTTPException(status_code=404, detail="Business not found — create one first")
-    return biz
-
-def serialize_template(t: PunchCardTemplateDB) -> dict:
-    return {"id": t.id, "name": t.name, "total_stamps": t.total_stamps, "reward_description": t.reward_description, "style": t.style, "is_active": t.is_active}
-
-def serialize_business(b: BusinessDB, include_template: bool = True) -> dict:
-    active_template = None
-    if include_template:
-        active = [t for t in b.templates if t.is_active]
-        if active:
-            active_template = serialize_template(active[0])
-    return {"id": b.id, "name": b.name, "description": b.description, "category": b.category, "address": b.address, "logo_color": b.logo_color, "cover_color": b.cover_color, "rating": b.rating, "active_template": active_template}
-
-def serialize_user_punchcard(upc: UserPunchCardDB) -> dict:
-    t = upc.template
-    b = t.business
-    return {"id": upc.id, "stamps_collected": upc.stamps_collected, "is_completed": upc.is_completed, "is_redeemed": upc.is_redeemed, "template": serialize_template(t), "business": {"id": b.id, "name": b.name, "logo_color": b.logo_color, "category": b.category}}
-
+# ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 def health():
     return {"ok": True}
+
 
 @app.post("/auth/google")
 def auth_google(payload: GoogleCredential, db: Session = Depends(get_db)):
@@ -309,35 +352,40 @@ def auth_google(payload: GoogleCredential, db: Session = Depends(get_db)):
             db.add(user)
             db.commit()
             db.refresh(user)
-        return {"ok": True, "user": {"sub": user.id, "email": user.email, "name": user.name, "picture": user.picture, "role": user.role}}
+        token = create_access_token(sub)
+        return {
+            "ok": True,
+            "token": token,
+            "user": {"sub": user.id, "email": user.email, "name": user.name, "picture": user.picture, "role": user.role},
+        }
     except Exception as e:
         print("Google token verification failed:", repr(e))
         traceback.print_exc()
         raise HTTPException(status_code=401, detail="Invalid Google token")
 
+
 @app.get("/users/me")
-def get_me(x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def get_me(user: UserDB = Depends(require_user)):
     return {"id": user.id, "email": user.email, "name": user.name, "picture": user.picture, "role": user.role}
 
+
 @app.put("/users/me/role")
-def set_role(payload: SetRoleRequest, x_user_id: str = Header(None), db: Session = Depends(get_db)):
+def set_role(payload: SetRoleRequest, user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     if payload.role not in ("user", "business"):
         raise HTTPException(status_code=400, detail="Role must be 'user' or 'business'")
-    user = require_user(x_user_id, db)
     user.role = payload.role
     db.commit()
     return {"ok": True, "role": user.role}
 
+
 @app.get("/businesses/me")
-def get_my_business(x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def get_my_business(user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     biz = require_business(user, db)
     return serialize_business(biz)
 
+
 @app.put("/businesses/me")
-def update_my_business(payload: UpdateBusinessRequest, x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def update_my_business(payload: UpdateBusinessRequest, user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     biz = require_business(user, db)
     for k, v in payload.dict(exclude_none=True).items():
         setattr(biz, k, v)
@@ -345,9 +393,9 @@ def update_my_business(payload: UpdateBusinessRequest, x_user_id: str = Header(N
     db.refresh(biz)
     return serialize_business(biz)
 
+
 @app.get("/businesses/me/stats")
-def get_my_stats(x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def get_my_stats(user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     biz = require_business(user, db)
     template_ids = [t.id for t in biz.templates]
     cards = db.query(UserPunchCardDB).filter(UserPunchCardDB.template_id.in_(template_ids)).all()
@@ -357,9 +405,9 @@ def get_my_stats(x_user_id: str = Header(None), db: Session = Depends(get_db)):
     redeemed_codes = db.query(AuthCodeDB).filter(AuthCodeDB.business_id == biz.id, AuthCodeDB.is_used == True).count()
     return {"unique_customers": unique_customers, "total_stamps_given": total_stamps, "completed_cards": completed, "total_transactions": redeemed_codes}
 
+
 @app.get("/businesses/me/customers")
-def get_my_customers(x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def get_my_customers(user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     biz = require_business(user, db)
     template_ids = [t.id for t in biz.templates]
     cards = db.query(UserPunchCardDB).filter(UserPunchCardDB.template_id.in_(template_ids)).all()
@@ -374,11 +422,12 @@ def get_my_customers(x_user_id: str = Header(None), db: Session = Depends(get_db
             by_user[uid]["completed"] = True
     return list(by_user.values())
 
+
 @app.get("/businesses/me/templates")
-def get_my_templates(x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def get_my_templates(user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     biz = require_business(user, db)
     return [serialize_template(t) for t in biz.templates]
+
 
 @app.get("/businesses")
 def list_businesses(category: Optional[str] = None, db: Session = Depends(get_db)):
@@ -387,9 +436,9 @@ def list_businesses(category: Optional[str] = None, db: Session = Depends(get_db
         q = q.filter(BusinessDB.category == category)
     return [serialize_business(b) for b in q.all()]
 
+
 @app.post("/businesses")
-def create_business(payload: CreateBusinessRequest, x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def create_business(payload: CreateBusinessRequest, user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     if db.query(BusinessDB).filter(BusinessDB.owner_id == user.id).first():
         raise HTTPException(status_code=400, detail="You already have a business")
     biz = BusinessDB(owner_id=user.id, **payload.dict())
@@ -398,6 +447,7 @@ def create_business(payload: CreateBusinessRequest, x_user_id: str = Header(None
     db.refresh(biz)
     return serialize_business(biz)
 
+
 @app.get("/businesses/{business_id}")
 def get_business(business_id: int, db: Session = Depends(get_db)):
     biz = db.query(BusinessDB).filter(BusinessDB.id == business_id).first()
@@ -405,9 +455,9 @@ def get_business(business_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Business not found")
     return serialize_business(biz)
 
+
 @app.post("/punchcard-templates")
-def create_template(payload: CreateTemplateRequest, x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def create_template(payload: CreateTemplateRequest, user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     biz = require_business(user, db)
     for t in biz.templates:
         if t.is_active:
@@ -418,15 +468,15 @@ def create_template(payload: CreateTemplateRequest, x_user_id: str = Header(None
     db.refresh(tmpl)
     return serialize_template(tmpl)
 
+
 @app.get("/user/punchcards")
-def get_user_punchcards(x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def get_user_punchcards(user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     cards = db.query(UserPunchCardDB).filter(UserPunchCardDB.user_id == user.id).all()
     return [serialize_user_punchcard(c) for c in cards]
 
+
 @app.post("/user/punchcards/{template_id}")
-def join_program(template_id: int, x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def join_program(template_id: int, user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     tmpl = db.query(PunchCardTemplateDB).filter(PunchCardTemplateDB.id == template_id).first()
     if not tmpl:
         raise HTTPException(status_code=404, detail="Template not found")
@@ -439,9 +489,9 @@ def join_program(template_id: int, x_user_id: str = Header(None), db: Session = 
     db.refresh(card)
     return serialize_user_punchcard(card)
 
+
 @app.post("/auth-codes/generate")
-def generate_code(payload: GenerateCodeRequest, x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def generate_code(payload: GenerateCodeRequest, user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     biz = require_business(user, db)
     tmpl = db.query(PunchCardTemplateDB).filter(PunchCardTemplateDB.id == payload.template_id, PunchCardTemplateDB.business_id == biz.id).first()
     if not tmpl:
@@ -455,9 +505,9 @@ def generate_code(payload: GenerateCodeRequest, x_user_id: str = Header(None), d
     db.commit()
     return {"code": code, "expires_at": expires_at.isoformat() + "Z", "template_id": payload.template_id, "business_id": biz.id}
 
+
 @app.post("/auth-codes/redeem")
-def redeem_code(payload: RedeemCodeRequest, x_user_id: str = Header(None), db: Session = Depends(get_db)):
-    user = require_user(x_user_id, db)
+def redeem_code(payload: RedeemCodeRequest, user: UserDB = Depends(require_user), db: Session = Depends(get_db)):
     now = datetime.utcnow()
     auth_code = db.query(AuthCodeDB).filter(AuthCodeDB.business_id == payload.business_id, AuthCodeDB.code == payload.code, AuthCodeDB.is_used == False).first()
     if not auth_code:
