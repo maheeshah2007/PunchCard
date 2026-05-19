@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-.venv/
-=======
 # Dependencies
 node_modules/
 
@@ -24,7 +21,7 @@ env/
 *.sqlite
 *.sqlite3
 
-# Environment
+# Environment — never commit real secrets
 .env
 .env.local
 .env.*.local
@@ -45,4 +42,3 @@ npm-debug.log*
 
 # Vite
 .vite/
->>>>>>> 3cd81de7ce89d447d046005e056666197f4c198e
