@@ -22,7 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<AppUser | null>(() => {
     try {
       const raw = localStorage.getItem("user");
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      // Discard stale sessions that pre-date JWT auth
+      if (!parsed?.token) { localStorage.removeItem("user"); return null; }
+      return parsed;
     } catch { return null; }
   });
 

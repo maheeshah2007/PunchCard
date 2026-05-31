@@ -101,12 +101,14 @@ export default function BusinessDetail() {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([Businesses.get(Number(id)), Businesses.list(), UserCards.list(authHeaders())]).then(([biz, all, cards]) => {
-      setBusiness(biz);
-      setAllBusinesses(all);
-      setUserCard(cards.find(c => c.business.id === biz.id) ?? null);
-      setLoading(false);
-    });
+    Promise.all([Businesses.get(Number(id)), Businesses.list(), UserCards.list(authHeaders())])
+      .then(([biz, all, cards]) => {
+        setBusiness(biz);
+        setAllBusinesses(all);
+        setUserCard(cards.find(c => c.business.id === biz.id) ?? null);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, [id]);
 
   async function join() {
