@@ -71,9 +71,13 @@ export default function Browse() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    Businesses.list().then(setBusinesses).catch(console.error).finally(() => setLoading(false));
+    Businesses.list()
+      .then(setBusinesses)
+      .catch(e => setError(e instanceof Error ? e.message : "Failed to load"))
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = businesses.filter(b => {
@@ -138,6 +142,11 @@ export default function Browse() {
 
         {loading ? (
           <div style={{ textAlign: "center", padding: 40, fontFamily: MONO, fontSize: 11, color: TEXT2 }}>LOADING...</div>
+        ) : error ? (
+          <div style={{ textAlign: "center", padding: "40px 24px", fontFamily: MONO }}>
+            <div style={{ fontSize: 13, color: "#EF4444", marginBottom: 8 }}>Could not load businesses.</div>
+            <div style={{ fontSize: 11, color: TEXT3 }}>{error}</div>
+          </div>
         ) : (
           <>
             {/* Top Picks Near You */}
