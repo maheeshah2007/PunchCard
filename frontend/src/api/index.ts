@@ -1,18 +1,30 @@
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8001";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers as Record<string, string>) },
-    ...options,
-  });
-  const text = await res.text();
-  let data: unknown;
-  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-  if (!res.ok) {
-    const err = data as Record<string, string> | null;
-    throw new Error(err?.detail ?? err?.message ?? `Request failed (${res.status})`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", ...(options.headers as Record<string, string>) },
+      ...options,
+    });
+    const text = await res.text();
+    let data: unknown;
+    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    if (!res.ok) {
+      const err = data as Record<string, string> | null;
+      throw new Error(err?.detail ?? err?.message ?? `Request failed (${res.status})`);
+    }
+    return data as T;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("Cannot reach server — make sure the backend is running on port 8001");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
-  return data as T;
 }
 
 export interface GoogleUser { sub?: string; email?: string; name?: string; picture?: string; role?: string | null; }
