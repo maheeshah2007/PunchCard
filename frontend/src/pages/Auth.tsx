@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-const GOOGLE_CLIENT_ID = "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "212855412758-c7guc92ug9eloic9a3ib9eknhrapgni1.apps.googleusercontent.com";
 const BG = "#0E0E0E";
 const MONO = "'DM Mono', 'Space Mono', monospace";
 const PLEX = "'IBM Plex Mono', 'Space Mono', monospace";
@@ -27,8 +27,8 @@ export default function Auth({ mode }: { mode: "login" | "register" }) {
         client_id: GOOGLE_CLIENT_ID,
         callback: async (response: { credential: string }) => {
           try {
-            const { user } = await AuthAPI.google(response.credential);
-            const appUser = { sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role };
+            const { token, user } = await AuthAPI.google(response.credential);
+            const appUser = { sub: user.sub ?? "", email: user.email, name: user.name, picture: user.picture, role: user.role, token };
             setUser(appUser);
             if (!appUser.role) navigate("/role-select");
             else if (appUser.role === "business") navigate("/business/dashboard");

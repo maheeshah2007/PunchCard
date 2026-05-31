@@ -1,5 +1,5 @@
 fastapi
 uvicorn[standard]
 pydantic
-google-auth
 sqlalchemy
+python-dotenv

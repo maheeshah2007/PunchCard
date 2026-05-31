@@ -1,17 +1,18 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export interface AppUser {
-  sub: string;
-  email?: string;
-  name?: string;
+  sub:      string;
+  email?:   string;
+  name?:    string;
   picture?: string;
-  role?: string | null;
+  role?:    string | null;
+  token:    string;
 }
 
 interface AuthContextType {
-  user: AppUser | null;
-  setUser: (u: AppUser | null) => void;
-  logout: () => void;
+  user:        AppUser | null;
+  setUser:     (u: AppUser | null) => void;
+  logout:      () => void;
   authHeaders: () => Record<string, string>;
 }
 
@@ -35,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const authHeaders = (): Record<string, string> => ({
     "Content-Type": "application/json",
-    ...(user?.sub ? { "x-user-id": user.sub } : {}),
+    ...(user?.token ? { "Authorization": `Bearer ${user.token}` } : {}),
   });
 
   return (
